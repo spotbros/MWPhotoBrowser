@@ -33,6 +33,7 @@
 - (void)photoBrowser:(MWPhotoBrowser *)photoBrowser didDisplayPhotoAtIndex:(NSUInteger)index;
 - (void)photoBrowser:(MWPhotoBrowser *)photoBrowser actionButtonPressedForPhotoAtIndex:(NSUInteger)index;
 - (void)photoBrowser:(MWPhotoBrowser *)photoBrowser actionSheetOption:(NSDictionary *)option;
+- (void)addToCloudCurrentPictureInPhotoBrowser:(MWPhotoBrowser *)photoBrowser;
 
 @end
 
@@ -44,7 +45,7 @@
 @property (nonatomic) BOOL zoomPhotosToFill;
 @property (nonatomic) BOOL displayNavArrows;
 @property (nonatomic) BOOL displayActionButton;
-@property (nonatomic, readonly) NSUInteger currentIndex;
+@property (nonatomic, readonly) NSUInteger currentIndex,currentPageIndex;
 
 // Init
 - (id)initWithPhotos:(NSArray *)photosArray  __attribute__((deprecated("Use initWithDelegate: instead"))); // Depreciated

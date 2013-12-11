@@ -7,7 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "MWPhotoBrowser.h"
 
 @interface AddToCloudUIActivity : UIActivity
+
+@property(nonatomic,strong)id<MWPhotoBrowserDelegate> delegate;
+
+- (id)initWithPhotoBrowser:(MWPhotoBrowser *)photoBrowser;
 
 @end
