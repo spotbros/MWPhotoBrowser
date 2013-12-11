@@ -190,9 +190,10 @@
     _photos = [[NSMutableArray alloc] init];
     
     _didSavePreviousStateOfNavBar = NO;
-    if ([self respondsToSelector:@selector(automaticallyAdjustsScrollViewInsets)]){
-        self.automaticallyAdjustsScrollViewInsets = NO;
-    }
+	
+//#if isIOS7
+//        self.automaticallyAdjustsScrollViewInsets = NO;
+//#endif
     
     // Listen for MWPhoto notifications
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -400,11 +401,11 @@
             presenting = [self.navigationController.viewControllers objectAtIndex:self.navigationController.viewControllers.count-2];
         }
     }
-    if (presenting) {
-        return [presenting prefersStatusBarHidden];
-    } else {
+//    if (presenting) {
+//        return [presenting prefersStatusBarHidden];
+//    } else {
         return NO;
-    }
+//    }
 }
 
 #pragma mark - Appearance
@@ -487,10 +488,10 @@
     [self.navigationController setNavigationBarHidden:NO animated:animated];
     UINavigationBar *navBar = self.navigationController.navigationBar;
     navBar.tintColor = SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7") ? [UIColor whiteColor] : nil;
-    if ([navBar respondsToSelector:@selector(setBarTintColor:)]) {
-        navBar.barTintColor = nil;
-        navBar.shadowImage = nil;
-    }
+//    if ([navBar respondsToSelector:@selector(setBarTintColor:)]) {
+//        navBar.barTintColor = nil;
+//        navBar.shadowImage = nil;
+//    }
     navBar.barStyle = UIBarStyleBlackTranslucent; //cambiar color
     if ([[UINavigationBar class] respondsToSelector:@selector(appearance)]) {
         [navBar setBackgroundImage:nil forBarMetrics:UIBarMetricsDefault];
@@ -500,9 +501,9 @@
 
 - (void)storePreviousNavBarAppearance {
     _didSavePreviousStateOfNavBar = YES;
-    if ([UINavigationBar instancesRespondToSelector:@selector(barTintColor)]) {
-        _previousNavBarBarTintColor = self.navigationController.navigationBar.barTintColor;
-    }
+//    if ([UINavigationBar instancesRespondToSelector:@selector(barTintColor)]) {
+//        _previousNavBarBarTintColor = self.navigationController.navigationBar.barTintColor;
+//    }
     _previousNavBarTintColor = self.navigationController.navigationBar.tintColor;
     _previousNavBarHidden = self.navigationController.navigationBarHidden;
     _previousNavBarStyle = self.navigationController.navigationBar.barStyle;
@@ -517,9 +518,9 @@
         [self.navigationController setNavigationBarHidden:_previousNavBarHidden animated:animated];
         UINavigationBar *navBar = self.navigationController.navigationBar;
         navBar.tintColor = _previousNavBarTintColor;
-        if ([UINavigationBar instancesRespondToSelector:@selector(barTintColor)]) {
-            navBar.barTintColor = _previousNavBarBarTintColor;
-        }
+//        if ([UINavigationBar instancesRespondToSelector:@selector(barTintColor)]) {
+//            navBar.barTintColor = _previousNavBarBarTintColor;
+//        }
         navBar.barStyle = _previousNavBarStyle;
         if ([[UINavigationBar class] respondsToSelector:@selector(appearance)]) {
             [navBar setBackgroundImage:_previousNavigationBarBackgroundImageDefault forBarMetrics:UIBarMetricsDefault];
@@ -1053,26 +1054,26 @@
     
     // Status bar
     if (!_leaveStatusBarAlone) {
-        if ([self respondsToSelector:@selector(setNeedsStatusBarAppearanceUpdate)]) {
-            
-            // Hide status bar
-            if (!_isVCBasedStatusBarAppearance) {
-                
-                // Non-view controller based
-                [[UIApplication sharedApplication] setStatusBarHidden:hidden withAnimation:animated ? UIStatusBarAnimationSlide : UIStatusBarAnimationNone];
-                
-            } else {
-                
-                // View controller based so animate away
-                _statusBarShouldBeHidden = hidden;
-                [UIView animateWithDuration:animationDuration animations:^(void) {
-                    [self setNeedsStatusBarAppearanceUpdate];
-                } completion:^(BOOL finished) {}];
-                
-            }
-
-        } else {
-            
+//        if ([self respondsToSelector:@selector(setNeedsStatusBarAppearanceUpdate)]) {
+//            
+//            // Hide status bar
+//            if (!_isVCBasedStatusBarAppearance) {
+//                
+//                // Non-view controller based
+//                [[UIApplication sharedApplication] setStatusBarHidden:hidden withAnimation:animated ? UIStatusBarAnimationSlide : UIStatusBarAnimationNone];
+//                
+//            } else {
+//                
+//                // View controller based so animate away
+//                _statusBarShouldBeHidden = hidden;
+//                [UIView animateWithDuration:animationDuration animations:^(void) {
+//                    [self setNeedsStatusBarAppearanceUpdate];
+//                } completion:^(BOOL finished) {}];
+//                
+//            }
+//
+//        } else {
+        
             // Status bar and nav bar positioning
             if (self.wantsFullScreenLayout) {
                 
@@ -1101,7 +1102,7 @@
                 
             }
             
-        }
+//        }
     }
     
     // Toolbar, nav bar and captions
