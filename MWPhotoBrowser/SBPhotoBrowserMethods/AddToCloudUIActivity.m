@@ -43,7 +43,7 @@
 	
     if (isIOS7)
     {
-        return [UIImage imageNamed:@"myCloudActivityItemIOS7º"];
+        return [UIImage imageNamed:@"myCloudActivityItemIOS7"];
     }
     else
     {
