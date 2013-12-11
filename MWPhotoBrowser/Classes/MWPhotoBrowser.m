@@ -12,7 +12,7 @@
 #import "MWZoomingScrollView.h"
 #import "MBProgressHUD.h"
 #import "SDImageCache.h"
-#import "ActivityViewCustomActivity.h"
+#import "AddToCloudUIActivity.h"
 
 #define PADDING                 10
 #define PAGE_INDEX_TAG_OFFSET   1000
@@ -1276,7 +1276,7 @@
                         [items addObject:photo.caption];
                     }
 					DLog(@"todo %@",items);
-					ActivityViewCustomActivity *ca = [[ActivityViewCustomActivity alloc]init];
+					AddToCloudUIActivity *ca = [[AddToCloudUIActivity alloc] init];
 					
                     self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:_actionSheetButtonsLabel ? @[ca] : nil];
 					NSMutableArray *excludedArray = [[NSMutableArray alloc] initWithObjects:UIActivityTypePostToWeibo, nil];
