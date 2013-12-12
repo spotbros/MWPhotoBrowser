@@ -1275,7 +1275,7 @@
                     if (photo.caption) {
                         [items addObject:photo.caption];
                     }
-					DLog(@"todo %@",items);
+					
 					AddToCloudUIActivity *ca = [[AddToCloudUIActivity alloc] init];
 					
                     self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:_actionSheetButtonsLabel ? @[ca] : nil];
