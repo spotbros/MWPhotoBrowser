@@ -1275,7 +1275,6 @@
                     if (photo.caption) {
                         [items addObject:photo.caption];
                     }
-					DLog(@"todo %@",items);
 					AddToCloudUIActivity *ca = [[AddToCloudUIActivity alloc] initWithPhotoBrowser:self];
 					[ca setDelegate:self.delegate];
 					
