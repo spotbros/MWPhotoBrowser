@@ -1275,8 +1275,8 @@
                     if (photo.caption) {
                         [items addObject:photo.caption];
                     }
-					
-					AddToCloudUIActivity *ca = [[AddToCloudUIActivity alloc] init];
+					AddToCloudUIActivity *ca = [[AddToCloudUIActivity alloc] initWithPhotoBrowser:self];
+					[ca setDelegate:self.delegate];
 					
                     self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:_actionSheetButtonsLabel ? @[ca] : nil];
 					NSMutableArray *excludedArray = [[NSMutableArray alloc] initWithObjects:UIActivityTypePostToWeibo, nil];

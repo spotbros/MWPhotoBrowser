@@ -8,7 +8,22 @@
 
 #import "AddToCloudUIActivity.h"
 
+@interface AddToCloudUIActivity ()
+
+@property (nonatomic, strong) MWPhotoBrowser *photoBrowser;
+
+@end
+
 @implementation AddToCloudUIActivity
+
+- (id)initWithPhotoBrowser:(MWPhotoBrowser *)photoBrowser
+{
+	if (self = [super init]) {
+		self.photoBrowser = photoBrowser;
+	}
+	
+	return self;
+}
 
 - (NSString *)activityType
 {
@@ -26,13 +41,13 @@
     // iPadShare@2x should be 126 px, iPadShare should be 53 px, iPhoneShare@2x should be 100
     // px, and iPhoneShare should be 50 px. I found these sizes to work for what I was making.
 	
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+    if (isIOS7)
     {
-        return [UIImage imageNamed:@"myCloudShortcut"];
+        return [UIImage imageNamed:@"myCloudActivityItemIOS7"];
     }
     else
     {
-        return [UIImage imageNamed:@"myCloudShortcut"];
+        return [UIImage imageNamed:@"myCloudActivityItem"];
     }
 }
 
@@ -58,6 +73,10 @@
     // This is where you can do anything you want, and is the whole reason for creating a custom
     // UIActivity
 	
+	if([_delegate respondsToSelector:@selector(addToCloudCurrentPictureInPhotoBrowser:)]) {
+		[_delegate performSelector:@selector(addToCloudCurrentPictureInPhotoBrowser:) withObject:self.photoBrowser];
+	}
+
     [self activityDidFinish:YES];
 }
 
