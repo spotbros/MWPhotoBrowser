@@ -12,7 +12,7 @@
 #import "MWZoomingScrollView.h"
 #import "MBProgressHUD.h"
 #import "SDImageCache.h"
-#import "AddToCloudUIActivity.h"
+#import "UIPhotoBrowserCustomActivity.h"
 
 #define PADDING                 10
 #define PAGE_INDEX_TAG_OFFSET   1000
@@ -44,7 +44,7 @@
 	UIBarButtonItem *_previousButton, *_nextButton, *_actionButton;
     MBProgressHUD *_progressHUD;
     UIActionSheet *_actionsSheet;
-	NSMutableArray *_actionSheetButtonsLabel;
+	NSArray *_applicationActivities;
     
     // Appearance
     BOOL _previousNavBarHidden;
@@ -144,9 +144,12 @@
 	return self;
 }
 
-- (id)initWithDelegate:(id <MWPhotoBrowserDelegate>)delegate andActionSheetButtonsLabels:(NSMutableArray*)arrayLabels {
+- (id)initWithDelegate:(id <MWPhotoBrowserDelegate>)delegate andActivities:(NSArray *)activities {
     if ((self = [self initWithDelegate:delegate])) {
-		_actionSheetButtonsLabel = [[NSMutableArray alloc] initWithArray:arrayLabels];
+        for(UIPhotoBrowserCustomActivity *a in activities) {
+            [a setPhotoBrowser:self];
+        }
+        _applicationActivities = activities;
     }
     return self;
 }
@@ -1254,10 +1257,6 @@
                                                                otherButtonTitles:NSLocalizedString(@"Save", nil), NSLocalizedString(@"Copy", nil), nil];
                     }
 					
-					for (NSString *st in _actionSheetButtonsLabel){
-						[_actionsSheet addButtonWithTitle:st];
-					}
-					
 					_actionsSheet.cancelButtonIndex = [_actionsSheet addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
 					
                     _actionsSheet.tag = ACTION_SHEET_OLD_ACTIONS;
@@ -1275,33 +1274,18 @@
                     if (photo.caption) {
                         [items addObject:photo.caption];
                     }
-					AddToCloudUIActivity *ca = [[AddToCloudUIActivity alloc] initWithPhotoBrowser:self];
-					[ca setDelegate:self.delegate];
 					
-                    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:_actionSheetButtonsLabel ? @[ca] : nil];
+                    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:_applicationActivities];
 					NSMutableArray *excludedArray = [[NSMutableArray alloc] initWithObjects:UIActivityTypePostToWeibo, nil];
-					if (_actionSheetButtonsLabel)
-						[excludedArray addObject:UIActivityTypeCopyToPasteboard];
 					
                     self.activityViewController.excludedActivityTypes = [NSArray arrayWithArray:excludedArray];
 					// Removed un-needed activities
-					
-					
-                    // Show loading spinner after a couple of seconds
-                    double delayInSeconds = 2.0;
-                    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-                    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-                        if (self.activityViewController) {
-                            [self showProgressHUDWithMessage:nil];
-                        }
-                    });
 
                     // Show
                     typeof(self) __weak weakSelf = self;
                     [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
                         weakSelf.activityViewController = nil;
                         [weakSelf hideControlsAfterDelay];
-                        [weakSelf hideProgressHUD:YES];
                     }];
                     [self presentViewController:self.activityViewController animated:YES completion:nil];
                     
@@ -1331,14 +1315,6 @@
                 [self copyPhoto]; return;
             } else if ([[actionSheet buttonTitleAtIndex:buttonIndex] isEqualToString:NSLocalizedString(@"Email", nil)]){//   buttonIndex == actionSheet.firstOtherButtonIndex + 2) {
                 [self emailPhoto]; return;
-            } else {
-				int optionIndexPath = buttonIndex - ([actionSheet numberOfButtons]-[_actionSheetButtonsLabel count]-1);
-				if(_delegate) {
-					if([_delegate respondsToSelector:@selector(photoBrowser:actionSheetOption:)]) {
-						NSDictionary *actionSheetOption = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:optionIndexPath], optionIndex, [NSNumber numberWithInt:_currentPageIndex], currentPageIndex, nil];
-						[_delegate performSelector:@selector(photoBrowser:actionSheetOption:) withObject:self withObject:actionSheetOption];
-					}
-				}
             }
         }
     }
@@ -1441,7 +1417,7 @@
         if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
             emailer.modalPresentationStyle = UIModalPresentationPageSheet;
         }
-        [self presentModalViewController:emailer animated:YES];
+        [self presentViewController:emailer animated:YES completion:nil];
         [self hideProgressHUD:NO];
     }
 }
