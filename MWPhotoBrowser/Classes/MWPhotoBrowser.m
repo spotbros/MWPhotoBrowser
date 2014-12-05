@@ -1280,6 +1280,11 @@
 					
                     self.activityViewController.excludedActivityTypes = [NSArray arrayWithArray:excludedArray];
 					// Removed un-needed activities
+                    
+                    if([[UIDevice currentDevice].systemVersion floatValue] >= 8.0 &&
+                       UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+                        self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
+                    }
 
                     // Show
                     typeof(self) __weak weakSelf = self;
