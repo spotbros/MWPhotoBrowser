@@ -16,6 +16,7 @@
 @interface MWPhoto () {
 
     BOOL _loadingInProgress;
+    BOOL _cacheToMemoryOnly;
         
 }
 
@@ -46,6 +47,10 @@
 	return [[MWPhoto alloc] initWithURL:url];
 }
 
++ (MWPhoto *)photoWithURL:(NSURL *)url cacheToMemoryOnly:(BOOL)cacheToMemoryOnly {
+    return [[MWPhoto alloc] initWithURL:url cacheToMemoryOnly:cacheToMemoryOnly];
+}
+
 #pragma mark NSObject
 
 - (id)initWithImage:(UIImage *)image {
@@ -68,6 +73,14 @@
 		_photoURL = [url copy];
 	}
 	return self;
+}
+
+- (id)initWithURL:(NSURL *)url cacheToMemoryOnly:(BOOL)cacheToMemoryOnly {
+    if ((self = [super init])) {
+        _photoURL = [url copy];
+        _cacheToMemoryOnly = cacheToMemoryOnly;
+    }
+    return self;
 }
 
 - (void)dealloc {
@@ -151,7 +164,7 @@
                     @try {
                         SDWebImageManager *manager = [SDWebImageManager sharedManager];
                         [manager downloadWithURL:_photoURL
-                                         options:0
+                                         options:_cacheToMemoryOnly ? SDWebImageCacheMemoryOnly : 0
                                         progress:^(NSUInteger receivedSize, long long expectedSize) {
                                             float progress = receivedSize / (float)expectedSize;
                                             NSDictionary* dict = [NSDictionary dictionaryWithObjectsAndKeys:
