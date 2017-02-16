@@ -1275,7 +1275,7 @@
                         [items addObject:photo.caption];
                     }
 					
-                    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:_applicationActivities];
+                    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:self.applicationActionsOnly ? [NSArray array] : items applicationActivities:_applicationActivities];
 					NSMutableArray *excludedArray = [[NSMutableArray alloc] initWithObjects:UIActivityTypePostToWeibo, nil];
 					
                     self.activityViewController.excludedActivityTypes = [NSArray arrayWithArray:excludedArray];

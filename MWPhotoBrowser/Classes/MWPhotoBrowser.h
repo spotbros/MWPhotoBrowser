@@ -43,6 +43,7 @@
 @property (nonatomic) BOOL zoomPhotosToFill;
 @property (nonatomic) BOOL displayNavArrows;
 @property (nonatomic) BOOL displayActionButton;
+@property (nonatomic) BOOL applicationActionsOnly;
 @property (nonatomic, readonly) NSUInteger currentIndex,currentPageIndex;
 
 // Init
