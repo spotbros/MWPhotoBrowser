@@ -1289,6 +1289,13 @@
                     // Show
                     typeof(self) __weak weakSelf = self;
                     [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
+                        
+                        if (weakSelf.delegate) {
+                            if ([weakSelf.delegate respondsToSelector:@selector(photoBrowser:activityType:completed:)]) {
+                                [weakSelf.delegate photoBrowser:weakSelf activityType:activityType completed:completed];
+                            }
+                        }
+                        
                         weakSelf.activityViewController = nil;
                         [weakSelf hideControlsAfterDelay];
                     }];
