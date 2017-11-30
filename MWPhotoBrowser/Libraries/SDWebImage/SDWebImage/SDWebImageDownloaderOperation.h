@@ -10,7 +10,17 @@
 #import "SDWebImageDownloader.h"
 #import "SDWebImageOperation.h"
 
-@interface SDWebImageDownloaderOperation : NSOperation <SDWebImageOperation>
+@protocol SDWebImageDownloaderOperationProtocol <SDWebImageOperation>
+
+- (id)initWithRequest:(NSURLRequest *)request
+              options:(SDWebImageDownloaderOptions)options
+             progress:(SDWebImageDownloaderProgressBlock)progressBlock
+            completed:(SDWebImageDownloaderCompletedBlock)completedBlock
+            cancelled:(void (^)())cancelBlock;
+
+@end
+
+@interface SDWebImageDownloaderOperation : NSOperation <SDWebImageDownloaderOperationProtocol>
 
 @property (strong, nonatomic, readonly) NSURLRequest *request;
 @property (assign, nonatomic, readonly) SDWebImageDownloaderOptions options;
