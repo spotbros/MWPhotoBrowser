@@ -43,7 +43,7 @@
 	NSTimer *_controlVisibilityTimer;
 	UIBarButtonItem *_previousButton, *_nextButton, *_actionButton;
     MBProgressHUD *_progressHUD;
-    UIActionSheet *_actionsSheet;
+    UIAlertController *_actionsAlertController;
 	NSArray *_applicationActivities;
     
     // Appearance
@@ -1224,113 +1224,55 @@
 #pragma mark - Actions
 
 - (void)actionButtonPressed:(id)sender {
-    if (_actionsSheet) {
+    // Only react when image has loaded
+    id <MWPhoto> photo = [self photoAtIndex:_currentPageIndex];
+    if ([self numberOfPhotos] > 0 && [photo underlyingImage]) {
         
-        // Dismiss
-        [_actionsSheet dismissWithClickedButtonIndex:_actionsSheet.cancelButtonIndex animated:YES];
-        
-    } else {
-        
-        // Only react when image has loaded
-        id <MWPhoto> photo = [self photoAtIndex:_currentPageIndex];
-        if ([self numberOfPhotos] > 0 && [photo underlyingImage]) {
+        // If they have defined a delegate method then just message them
+        if ([self.delegate respondsToSelector:@selector(photoBrowser:actionButtonPressedForPhotoAtIndex:)]) {
             
-            // If they have defined a delegate method then just message them
-            if ([self.delegate respondsToSelector:@selector(photoBrowser:actionButtonPressedForPhotoAtIndex:)]) {
-                
-                // Let delegate handle things
-                [self.delegate photoBrowser:self actionButtonPressedForPhotoAtIndex:_currentPageIndex];
-                
-            } else {
-                
-                // Handle default actions
-                if (SYSTEM_VERSION_LESS_THAN(@"6")) {
-                    
-                    // Old handling of activities with action sheet
-                    if ([MFMailComposeViewController canSendMail]) {
-                        _actionsSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self
-                                                               cancelButtonTitle:nil destructiveButtonTitle:nil
-                                                               otherButtonTitles:NSLocalizedString(@"Save", nil), NSLocalizedString(@"Copy", nil), NSLocalizedString(@"Email", nil), nil];
-                    } else {
-                        _actionsSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self
-                                                               cancelButtonTitle:nil destructiveButtonTitle:nil
-                                                               otherButtonTitles:NSLocalizedString(@"Save", nil), NSLocalizedString(@"Copy", nil), nil];
-                    }
-					
-					_actionsSheet.cancelButtonIndex = [_actionsSheet addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
-					
-                    _actionsSheet.tag = ACTION_SHEET_OLD_ACTIONS;
-                    _actionsSheet.actionSheetStyle = UIActionSheetStyleBlackTranslucent;
-                    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-                        [_actionsSheet showFromBarButtonItem:sender animated:YES];
-                    } else {
-                        [_actionsSheet showInView:self.view];
-                    }
-                    
-                } else {
-                    
-                    // Show activity view controller
-                    NSMutableArray *items = [NSMutableArray arrayWithObject:[photo underlyingImage]];
-                    if (photo.caption) {
-                        [items addObject:photo.caption];
-                    }
-					
-                    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:self.applicationActionsOnly ? [NSArray array] : items applicationActivities:_applicationActivities];
-					NSMutableArray *excludedArray = [[NSMutableArray alloc] initWithObjects:UIActivityTypePostToWeibo, nil];
-					
-                    self.activityViewController.excludedActivityTypes = [NSArray arrayWithArray:excludedArray];
-					// Removed un-needed activities
-                    
-                    if([[UIDevice currentDevice].systemVersion floatValue] >= 8.0 &&
-                       UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-                        self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
-                    }
+            // Let delegate handle things
+            [self.delegate photoBrowser:self actionButtonPressedForPhotoAtIndex:_currentPageIndex];
+            
+        } else {
+            // Show activity view controller
+            NSMutableArray *items = [NSMutableArray arrayWithObject:[photo underlyingImage]];
+            if (photo.caption) {
+                [items addObject:photo.caption];
+            }
+            
+            self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:self.applicationActionsOnly ? [NSArray array] : items applicationActivities:_applicationActivities];
+            NSMutableArray *excludedArray = [[NSMutableArray alloc] initWithObjects:UIActivityTypePostToWeibo, nil];
+            
+            self.activityViewController.excludedActivityTypes = [NSArray arrayWithArray:excludedArray];
+            // Removed un-needed activities
+            
+            if([[UIDevice currentDevice].systemVersion floatValue] >= 8.0 &&
+               UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+                self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
+            }
 
-                    // Show
-                    typeof(self) __weak weakSelf = self;
-                    [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
-                        
-                        if (weakSelf.delegate) {
-                            if ([weakSelf.delegate respondsToSelector:@selector(photoBrowser:activityType:completed:)]) {
-                                [weakSelf.delegate photoBrowser:weakSelf activityType:activityType completed:completed];
-                            }
-                        }
-                        
-                        weakSelf.activityViewController = nil;
-                        [weakSelf hideControlsAfterDelay];
-                    }];
-                    [self presentViewController:self.activityViewController animated:YES completion:nil];
-                    
+            // Show
+            typeof(self) __weak weakSelf = self;
+            [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
+                
+                if (weakSelf.delegate) {
+                    if ([weakSelf.delegate respondsToSelector:@selector(photoBrowser:activityType:completed:)]) {
+                        [weakSelf.delegate photoBrowser:weakSelf activityType:activityType completed:completed];
+                    }
                 }
                 
-            }
+                weakSelf.activityViewController = nil;
+                [weakSelf hideControlsAfterDelay];
+            }];
+            [self presentViewController:self.activityViewController animated:YES completion:nil];
             
-            // Keep controls hidden
-            [self setControlsHidden:NO animated:YES permanent:YES];
-
         }
+        
+        // Keep controls hidden
+        [self setControlsHidden:NO animated:YES permanent:YES];
+
     }
-}
-
-
-
-#pragma mark - Action Sheet Delegate
-
-- (void)actionSheet:(UIActionSheet *)actionSheet didDismissWithButtonIndex:(NSInteger)buttonIndex {
-    if (actionSheet.tag == ACTION_SHEET_OLD_ACTIONS) {
-        // Old Actions
-        _actionsSheet = nil;
-        if (buttonIndex != actionSheet.cancelButtonIndex) {
-            if (buttonIndex == actionSheet.firstOtherButtonIndex) {
-                [self savePhoto]; return;
-            } else if (buttonIndex == actionSheet.firstOtherButtonIndex + 1) {
-                [self copyPhoto]; return;
-            } else if ([[actionSheet buttonTitleAtIndex:buttonIndex] isEqualToString:NSLocalizedString(@"Email", nil)]){//   buttonIndex == actionSheet.firstOtherButtonIndex + 2) {
-                [self emailPhoto]; return;
-            }
-        }
-    }
-    [self hideControlsAfterDelay]; // Continue as normal...
 }
 
 #pragma mark - Action Progress

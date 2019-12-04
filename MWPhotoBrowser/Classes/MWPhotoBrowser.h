@@ -37,7 +37,7 @@
 @end
 
 // MWPhotoBrowser
-@interface MWPhotoBrowser : UIViewController <UIScrollViewDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate> 
+@interface MWPhotoBrowser : UIViewController <UIScrollViewDelegate, MFMailComposeViewControllerDelegate>
 
 // Properties
 @property (nonatomic, weak) IBOutlet id<MWPhotoBrowserDelegate> delegate;
