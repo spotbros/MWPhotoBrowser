@@ -48,7 +48,7 @@
 @property (nonatomic, readonly) NSUInteger currentIndex,currentPageIndex;
 
 // Init
-- (id)initWithPhotos:(NSArray *)photosArray  __attribute__((deprecated("Use initWithDelegate: instead"))); // Depreciated
+- (id)initWithPhotos:(NSArray *)photosArray; // Depreciated
 - (id)initWithDelegate:(id <MWPhotoBrowserDelegate>)delegate;
 - (id)initWithDelegate:(id <MWPhotoBrowserDelegate>)delegate andActivities:(NSArray *)activities;
 
@@ -58,7 +58,7 @@
 
 // Set page that photo browser starts on
 - (void)setCurrentPhotoIndex:(NSUInteger)index;
-- (void)setInitialPageIndex:(NSUInteger)index  __attribute__((deprecated("Use setCurrentPhotoIndex: instead"))); // Depreciated
+- (void)setInitialPageIndex:(NSUInteger)index; // Depreciated
 
 // Navigation
 - (void)showNextPhotoAnimated:(BOOL)animated;

@@ -258,7 +258,7 @@
 	[self.view addSubview:_pagingScrollView];
 	
     // Toolbar
-    _toolbar = [[UIToolbar alloc] initWithFrame:[self frameForToolbarAtOrientation:self.interfaceOrientation]];
+    _toolbar = [[UIToolbar alloc] initWithFrame:[self frameForToolbarAtOrientation:[[UIApplication sharedApplication] statusBarOrientation]]];
     _toolbar.tintColor = SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7") ? [UIColor whiteColor] : nil;
     if ([[UIToolbar class] respondsToSelector:@selector(appearance)]) {
         [_toolbar setBackgroundImage:nil forToolbarPosition:UIToolbarPositionAny barMetrics:UIBarMetricsDefault];
@@ -429,7 +429,6 @@
     }
     if (!_leaveStatusBarAlone && self.wantsFullScreenLayout && UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
         _previousStatusBarStyle = [[UIApplication sharedApplication] statusBarStyle];
-        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackTranslucent animated:animated];
     }
     
     // Navigation bar appearance
@@ -468,7 +467,7 @@
     
     // Status bar
     if (!_leaveStatusBarAlone && self.wantsFullScreenLayout && UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
-        [[UIApplication sharedApplication] setStatusBarStyle:_previousStatusBarStyle animated:animated];
+        
     }
     
     // Show navigation controller's toolbar
@@ -548,7 +547,7 @@
 	_performingLayout = YES;
 	
 	// Toolbar
-	_toolbar.frame = [self frameForToolbarAtOrientation:self.interfaceOrientation];
+	_toolbar.frame = [self frameForToolbarAtOrientation:[[UIApplication sharedApplication] statusBarOrientation]];
     
 	// Remember index
 	NSUInteger indexPriorToLayout = _currentPageIndex;
@@ -1112,7 +1111,7 @@
     if (slideAndFade && [self areControlsHidden] && !hidden && animated) {
         
         // Toolbar
-        _toolbar.frame = CGRectOffset([self frameForToolbarAtOrientation:self.interfaceOrientation], 0, animatonOffset);
+        _toolbar.frame = CGRectOffset([self frameForToolbarAtOrientation:[[UIApplication sharedApplication] statusBarOrientation]], 0, animatonOffset);
         
         // Captions
         for (MWZoomingScrollView *page in _visiblePages) {
@@ -1135,7 +1134,7 @@
         
         // Toolbar
         if (slideAndFade) {
-            _toolbar.frame = [self frameForToolbarAtOrientation:self.interfaceOrientation];
+            _toolbar.frame = [self frameForToolbarAtOrientation:[[UIApplication sharedApplication] statusBarOrientation]];
             if (hidden) _toolbar.frame = CGRectOffset(_toolbar.frame, 0, animatonOffset);
         }
         _toolbar.alpha = alpha;
