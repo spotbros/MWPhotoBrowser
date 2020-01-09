@@ -766,9 +766,9 @@
 	int iFirstIndex = (int)floorf((CGRectGetMinX(visibleBounds)+PADDING*2) / CGRectGetWidth(visibleBounds));
 	int iLastIndex  = (int)floorf((CGRectGetMaxX(visibleBounds)-PADDING*2-1) / CGRectGetWidth(visibleBounds));
     if (iFirstIndex < 0) iFirstIndex = 0;
-    if (iFirstIndex > [self numberOfPhotos] - 1) iFirstIndex = [self numberOfPhotos] - 1;
+    if (iFirstIndex > [self numberOfPhotos] - 1) iFirstIndex = (int)[self numberOfPhotos] - 1;
     if (iLastIndex < 0) iLastIndex = 0;
-    if (iLastIndex > [self numberOfPhotos] - 1) iLastIndex = [self numberOfPhotos] - 1;
+    if (iLastIndex > [self numberOfPhotos] - 1) iLastIndex = (int)[self numberOfPhotos] - 1;
 	
 	// Recycle no longer needed pages
     NSInteger pageIndex;
@@ -969,7 +969,7 @@
 	CGRect visibleBounds = _pagingScrollView.bounds;
 	int index = (int)(floorf(CGRectGetMidX(visibleBounds) / CGRectGetWidth(visibleBounds)));
     if (index < 0) index = 0;
-	if (index > [self numberOfPhotos] - 1) index = [self numberOfPhotos] - 1;
+	if (index > [self numberOfPhotos] - 1) index = (int)[self numberOfPhotos] - 1;
 	NSUInteger previousCurrentPage = _currentPageIndex;
 	_currentPageIndex = index;
 	if (_currentPageIndex != previousCurrentPage) {
@@ -994,7 +994,7 @@
     
 	// Title
 	if ([self numberOfPhotos] > 1) {
-		self.title = [NSString stringWithFormat:@"%i %@ %i", _currentPageIndex+1, NSLocalizedString(@"of", @"Used in the context: 'Showing 1 of 3 items'"), [self numberOfPhotos]];		
+        self.title = [NSString stringWithFormat:@"%d %@ %lu", (int)_currentPageIndex+1, NSLocalizedString(@"of", @"Used in the context: 'Showing 1 of 3 items'"), (unsigned long)[self numberOfPhotos]];
 	} else {
 		self.title = nil;
 	}

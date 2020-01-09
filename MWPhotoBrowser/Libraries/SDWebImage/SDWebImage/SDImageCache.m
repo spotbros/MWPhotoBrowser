@@ -476,6 +476,9 @@ static const NSInteger kDefaultCacheMaxCacheAge = 60 * 60 * 24 * 7; // 1 week
     for (NSString *fileName in fileEnumerator)
     {
         count += 1;
+        if (fileName == nil) {
+            NSLog(@"error");
+        }
     }
     
     return count;
