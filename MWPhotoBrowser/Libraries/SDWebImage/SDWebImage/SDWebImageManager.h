@@ -176,4 +176,9 @@ SDWebImageManager *manager = [SDWebImageManager sharedManager];
  */
 - (BOOL)diskImageExistsForURL:(NSURL *)url;
 
+/**
+ * Remove the cached image for a given URL
+ */
+- (void)removeImageForURL:(NSURL *)url;
+
 @end

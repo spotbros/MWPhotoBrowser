@@ -66,6 +66,11 @@
     }
 }
 
+- (void)removeImageForURL:(NSURL *)url
+{
+    [[SDImageCache sharedImageCache] removeImageForKey:[self cacheKeyForURL:url] fromDisk:YES];
+}
+
 - (BOOL)diskImageExistsForURL:(NSURL *)url
 {
     NSString *key = [self cacheKeyForURL:url];
