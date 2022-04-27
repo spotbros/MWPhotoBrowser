@@ -13,6 +13,8 @@
 #import "MBProgressHUD.h"
 #import "SDImageCache.h"
 #import "UIPhotoBrowserCustomActivity.h"
+#import "FontUtils.h"
+#import "NSString+EquivalendReplacementsForDeprecations.h"
 
 #define PADDING                 10
 #define PAGE_INDEX_TAG_OFFSET   1000
@@ -995,8 +997,23 @@
 	// Title
 	if ([self numberOfPhotos] > 1) {
         self.title = [NSString stringWithFormat:@"%d %@ %lu", (int)_currentPageIndex+1, NSLocalizedString(@"of", @"Used in the context: 'Showing 1 of 3 items'"), (unsigned long)[self numberOfPhotos]];
+        
+        UILabel *titleView = (UILabel *)self.navigationItem.titleView;
+        
+        if (!titleView) {
+            titleView = [[UILabel alloc] init];
+            titleView.backgroundColor = [UIColor clearColor];
+            titleView.textColor = [UIColor whiteColor];
+            titleView.font = [UIFont boldSystemFontOfSize:[FontUtils adaptedFontSizeWithDefault:19]];
+            self.navigationItem.titleView = titleView;
+        }
+        
+        CGRect frame = CGRectMake(0, 0, [self.title _sizeWithFont:[UIFont boldSystemFontOfSize:[FontUtils adaptedFontSizeWithDefault:19]]].width, 44);
+        titleView.frame = frame;
+        titleView.text = self.title;
 	} else {
 		self.title = nil;
+        self.navigationItem.titleView = nil;
 	}
 	
 	// Buttons
