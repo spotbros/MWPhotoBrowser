@@ -944,7 +944,13 @@
     CGFloat height = 44;
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone &&
         UIInterfaceOrientationIsLandscape(orientation)) height = 32;
-	return CGRectIntegral(CGRectMake(0, self.view.bounds.size.height - height, self.view.bounds.size.width, height));
+    CGFloat bottomPadding = 0;
+    if (@available(iOS 11.0, *)) {
+        if ([[UIApplication sharedApplication] keyWindow].safeAreaInsets.top > 0) {
+            bottomPadding = [[UIApplication sharedApplication] keyWindow].safeAreaInsets.bottom;
+        }
+    }
+    return CGRectIntegral(CGRectMake(0, self.view.bounds.size.height - height - bottomPadding, self.view.bounds.size.width, height));
 }
 
 - (CGRect)frameForCaptionView:(MWCaptionView *)captionView atIndex:(NSUInteger)index {
