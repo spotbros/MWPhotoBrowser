@@ -16,7 +16,7 @@
 #import "FontUtils.h"
 #import "NSString+EquivalendReplacementsForDeprecations.h"
 
-#define PADDING                 10
+#define PADDING                 0
 #define PAGE_INDEX_TAG_OFFSET   1000
 #define PAGE_INDEX(page)        ([(page) tag] - PAGE_INDEX_TAG_OFFSET)
 #define ACTION_SHEET_OLD_ACTIONS 2000
@@ -910,9 +910,11 @@
 #pragma mark - Frame Calculations
 
 - (CGRect)frameForPagingScrollView {
-    CGRect frame = self.view.bounds;// [[UIScreen mainScreen] bounds];
+    CGRect frame = self.view.bounds;
     frame.origin.x -= PADDING;
     frame.size.width += (2 * PADDING);
+    frame.origin.y += self.view.safeAreaInsets.top;
+    frame.size.height -= (self.view.safeAreaInsets.top + self.view.safeAreaInsets.bottom);
     return CGRectIntegral(frame);
 }
 
