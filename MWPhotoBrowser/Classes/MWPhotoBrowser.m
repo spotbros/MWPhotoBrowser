@@ -15,6 +15,7 @@
 #import "UIPhotoBrowserCustomActivity.h"
 #import "FontUtils.h"
 #import "NSString+EquivalendReplacementsForDeprecations.h"
+#import "UINavigationBar+Helper.h"
 
 #define PADDING                 0
 #define PAGE_INDEX_TAG_OFFSET   1000
@@ -500,6 +501,7 @@
         [navBar setBackgroundImage:nil forBarMetrics:UIBarMetricsDefault];
         [navBar setBackgroundImage:nil forBarMetrics:UIBarMetricsCompact];
     }
+    navBar.appearanceBackgroundColor = [UIColor blackColor];
 }
 
 - (void)storePreviousNavBarAppearance {
@@ -507,7 +509,7 @@
     if ([UINavigationBar instancesRespondToSelector:@selector(barTintColor)]) {
         _previousNavBarBarTintColor = self.navigationController.navigationBar.barTintColor;
     }
-    _previousNavBarTintColor = self.navigationController.navigationBar.tintColor;
+    _previousNavBarTintColor = self.navigationController.navigationBar.appearanceBackgroundColor;
     _previousNavBarHidden = self.navigationController.navigationBarHidden;
     _previousNavBarStyle = self.navigationController.navigationBar.barStyle;
     if ([[UINavigationBar class] respondsToSelector:@selector(appearance)]) {
@@ -520,7 +522,7 @@
     if (_didSavePreviousStateOfNavBar) {
         [self.navigationController setNavigationBarHidden:_previousNavBarHidden animated:animated];
         UINavigationBar *navBar = self.navigationController.navigationBar;
-        navBar.tintColor = _previousNavBarTintColor;
+        navBar.appearanceBackgroundColor = _previousNavBarTintColor;
         if ([UINavigationBar instancesRespondToSelector:@selector(barTintColor)]) {
             navBar.barTintColor = _previousNavBarBarTintColor;
         }
