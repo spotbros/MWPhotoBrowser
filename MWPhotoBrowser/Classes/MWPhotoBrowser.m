@@ -306,7 +306,7 @@
     // Navigation buttons
     if ([self.navigationController.viewControllers objectAtIndex:0] == self) {
         // We're first on stack so show done button
-        UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Done", nil) style:UIBarButtonItemStylePlain target:self action:@selector(doneButtonPressed:)];
+        UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Close", nil) style:UIBarButtonItemStylePlain target:self action:@selector(doneButtonPressed:)];
         // Set appearance
         if ([UIBarButtonItem respondsToSelector:@selector(appearance)]) {
             [doneButton setBackgroundImage:nil forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
@@ -445,7 +445,9 @@
     [self.navigationController setToolbarHidden:YES];
     
     // Update UI
-	[self hideControlsAfterDelay];
+    if (!kMWPhotoBrowserAlwaysShowTools) {
+        [self hideControlsAfterDelay];
+    }
     
 }
 
@@ -617,8 +619,9 @@
 	_currentPageIndex = _pageIndexBeforeRotation;
 	
 	// Delay control holding
-	[self hideControlsAfterDelay];
-	
+    if (!kMWPhotoBrowserAlwaysShowTools) {
+        [self hideControlsAfterDelay];
+    }
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
@@ -916,7 +919,7 @@
     frame.origin.x -= PADDING;
     frame.size.width += (2 * PADDING);
     frame.origin.y += self.view.safeAreaInsets.top;
-    frame.size.height -= (self.view.safeAreaInsets.top + self.view.safeAreaInsets.bottom);
+    frame.size.height -= (self.view.safeAreaInsets.top + self.view.safeAreaInsets.bottom + _toolbar.frame.size.height);
     return CGRectIntegral(frame);
 }
 
@@ -992,7 +995,9 @@
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
 	// Hide controls when dragging begins
-	[self setControlsHidden:YES animated:YES permanent:NO];
+    if (!kMWPhotoBrowserAlwaysShowTools) {
+        [self setControlsHidden:YES animated:YES permanent:NO];
+    }
 }
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
@@ -1043,8 +1048,9 @@
 	}
 	
 	// Update timer to give more time
-	[self hideControlsAfterDelay];
-	
+    if (!kMWPhotoBrowserAlwaysShowTools) {
+        [self hideControlsAfterDelay];
+    }
 }
 
 - (void)gotoPreviousPage {
@@ -1186,7 +1192,9 @@
 	// Control hiding timer
 	// Will cancel existing timer but only begin hiding if
 	// they are visible
-	if (!permanent) [self hideControlsAfterDelay];
+    if (!kMWPhotoBrowserAlwaysShowTools) {
+        if (!permanent) [self hideControlsAfterDelay];
+    }
 	
 }
 
@@ -1289,7 +1297,9 @@
                 }
                 
                 weakSelf.activityViewController = nil;
-                [weakSelf hideControlsAfterDelay];
+                if (!kMWPhotoBrowserAlwaysShowTools) {
+                    [weakSelf hideControlsAfterDelay];
+                }
             }];
             [self presentViewController:self.activityViewController animated:YES completion:nil];
             
@@ -1360,7 +1370,9 @@
 
 - (void)image:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
     [self showProgressHUDCompleteMessage: error ? NSLocalizedString(@"Failed", @"Informing the user a process has failed") : NSLocalizedString(@"Saved", @"Informing the user an item has been saved")];
-    [self hideControlsAfterDelay]; // Continue as normal...
+    if (!kMWPhotoBrowserAlwaysShowTools) {
+        [self hideControlsAfterDelay]; // Continue as normal...
+    }
 }
 
 - (void)copyPhoto {
@@ -1376,7 +1388,9 @@
         [[UIPasteboard generalPasteboard] setData:UIImagePNGRepresentation([photo underlyingImage])
                                 forPasteboardType:@"public.png"];
         [self showProgressHUDCompleteMessage:NSLocalizedString(@"Copied", @"Informing the user an item has finished copying")];
-        [self hideControlsAfterDelay]; // Continue as normal...
+        if (!kMWPhotoBrowserAlwaysShowTools) {
+            [self hideControlsAfterDelay]; // Continue as normal...
+        }
     }
 }
 

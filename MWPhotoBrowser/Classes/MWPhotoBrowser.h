@@ -19,6 +19,8 @@
 #define MWLog(x, ...)
 #endif
 
+#define kMWPhotoBrowserAlwaysShowTools YES
+
 // Delgate
 @class MWPhotoBrowser;
 

@@ -298,13 +298,17 @@
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-	[_photoBrowser hideControlsAfterDelay];
+    if (!kMWPhotoBrowserAlwaysShowTools) {
+        [_photoBrowser hideControlsAfterDelay];
+    }
 }
 
 #pragma mark - Tap Detection
 
 - (void)handleSingleTap:(CGPoint)touchPoint {
-	[_photoBrowser performSelector:@selector(toggleControls) withObject:nil afterDelay:0.2];
+    if (!kMWPhotoBrowserAlwaysShowTools) {
+        [_photoBrowser performSelector:@selector(toggleControls) withObject:nil afterDelay:0.2];
+    }
 }
 
 - (void)handleDoubleTap:(CGPoint)touchPoint {
@@ -336,7 +340,9 @@
 	}
 	
 	// Delay controls
-	[_photoBrowser hideControlsAfterDelay];
+    if (!kMWPhotoBrowserAlwaysShowTools) {
+        [_photoBrowser hideControlsAfterDelay];
+    }
 	
 }
 
