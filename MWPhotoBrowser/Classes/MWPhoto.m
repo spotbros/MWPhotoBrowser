@@ -38,6 +38,14 @@
 	return [[MWPhoto alloc] initWithImage:image];
 }
 
++ (MWPhoto *)photoWithImage:(UIImage *)image URL:(NSURL *)url {
+    return [[MWPhoto alloc] initWithImage:image URL:url];
+}
+
++ (MWPhoto *)photoWithImage:(UIImage *)image URL:(NSURL *)url cacheToMemoryOnly:(BOOL)cacheToMemoryOnly {
+    return [[MWPhoto alloc] initWithImage:image URL:url cacheToMemoryOnly:cacheToMemoryOnly];
+}
+
 // Depricated
 + (MWPhoto *)photoWithFilePath:(NSString *)path {
     return [MWPhoto photoWithURL:[NSURL fileURLWithPath:path]];
@@ -58,6 +66,25 @@
 		_image = image;
 	}
 	return self;
+}
+
+- (id)initWithImage:(UIImage *)image URL:(NSURL *)url {
+    if ((self = [super init])) {
+        _image = image;
+        _photoURL = [url copy];
+        _alwaysReloadUnderlyingImage = YES;
+    }
+    return self;
+}
+
+- (id)initWithImage:(UIImage *)image URL:(NSURL *)url cacheToMemoryOnly:(BOOL)cacheToMemoryOnly {
+    if ((self = [super init])) {
+        _image = image;
+        _photoURL = [url copy];
+        _cacheToMemoryOnly = cacheToMemoryOnly;
+        _alwaysReloadUnderlyingImage = YES;
+    }
+    return self;
 }
 
 // Depricated

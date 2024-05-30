@@ -51,6 +51,13 @@
 // as long as the image can be re-loaded (from cache, file, or URL)
 - (void)unloadUnderlyingImage;
 
+// Returns YES if the underlying image should always be realoaded, even
+// if it is available. If not available the image will be loaded as usual,
+// and if it is available, the underlying image will be used inmediately but it will
+// be re-loaded (from cache, file, or URL)
+//
+- (BOOL)alwaysReloadUnderlyingImage;
+
 @optional
 
 // Return a caption string to be displayed over the image
