@@ -16,7 +16,7 @@
 @interface MWPhoto () {
 
     BOOL _loadingInProgress;
-    BOOL _cacheToMemoryOnly;
+    MWPhotoOptions _options;
         
 }
 
@@ -47,8 +47,8 @@
 	return [[MWPhoto alloc] initWithURL:url];
 }
 
-+ (MWPhoto *)photoWithURL:(NSURL *)url cacheToMemoryOnly:(BOOL)cacheToMemoryOnly {
-    return [[MWPhoto alloc] initWithURL:url cacheToMemoryOnly:cacheToMemoryOnly];
++ (MWPhoto *)photoWithURL:(NSURL *)url options:(MWPhotoOptions)options {
+    return [[MWPhoto alloc] initWithURL:url options:options];
 }
 
 #pragma mark NSObject
@@ -75,12 +75,20 @@
 	return self;
 }
 
-- (id)initWithURL:(NSURL *)url cacheToMemoryOnly:(BOOL)cacheToMemoryOnly {
+- (id)initWithURL:(NSURL *)url options:(MWPhotoOptions)options {
     if ((self = [super init])) {
         _photoURL = [url copy];
-        _cacheToMemoryOnly = cacheToMemoryOnly;
+        _options = options;
     }
     return self;
+}
+
+- (BOOL)cacheToMemoryOnly {
+    return _options | MWPhotoCacheMemoryOnly;
+}
+
+- (BOOL)alwaysDownload {
+    return _options | MWPhotoRefreshCached;
 }
 
 - (void)dealloc {
@@ -163,8 +171,11 @@
                     // Load async from web (using SDWebImage)
                     @try {
                         SDWebImageManager *manager = [SDWebImageManager sharedManager];
+                        SDWebImageOptions options = 0;
+                        options |= [self alwaysDownload] ? SDWebImageRefreshCached : 0;
+                        options |= [self cacheToMemoryOnly] ? SDWebImageCacheMemoryOnly : 0;
                         [manager downloadWithURL:_photoURL
-                                         options:_cacheToMemoryOnly ? SDWebImageCacheMemoryOnly : 0
+                                         options:options
                                         progress:^(NSUInteger receivedSize, long long expectedSize) {
                                             float progress = receivedSize / (float)expectedSize;
                                             NSDictionary* dict = [NSDictionary dictionaryWithObjectsAndKeys:

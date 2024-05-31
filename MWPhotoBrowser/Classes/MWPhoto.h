@@ -9,6 +9,11 @@
 #import <Foundation/Foundation.h>
 #import "MWPhotoProtocol.h"
 
+typedef enum {
+    MWPhotoCacheMemoryOnly = 1 << 0,
+    MWPhotoRefreshCached = 1 << 1
+} MWPhotoOptions;
+
 // This class models a photo/image and it's caption
 // If you want to handle photos, caching, decompression
 // yourself then you can simply ensure your custom data model
@@ -25,12 +30,12 @@
 + (MWPhoto *)photoWithImage:(UIImage *)image;
 + (MWPhoto *)photoWithFilePath:(NSString *)path  __attribute__((deprecated("Use photoWithURL: with a file URL"))); // Depreciated
 + (MWPhoto *)photoWithURL:(NSURL *)url;
-+ (MWPhoto *)photoWithURL:(NSURL *)url cacheToMemoryOnly:(BOOL)cacheToMemoryOnly;
++ (MWPhoto *)photoWithURL:(NSURL *)url options:(MWPhotoOptions)options;
 
 // Init
 - (id)initWithImage:(UIImage *)image;
 - (id)initWithURL:(NSURL *)url;
-- (id)initWithURL:(NSURL *)url cacheToMemoryOnly:(BOOL)cacheToMemoryOnly;
+- (id)initWithURL:(NSURL *)url options:(MWPhotoOptions)options;
 - (id)initWithFilePath:(NSString *)path  __attribute__((deprecated("Use initWithURL: with a file URL"))); // Depreciated
 
 @end

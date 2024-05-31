@@ -111,7 +111,11 @@
 
 // Get and display image
 - (void)displayImage {
-	if (_photo && _photoImageView.image == nil) {
+    [self displayImage:YES];
+}
+
+- (void)displayImage:(BOOL)force {
+	if (_photo && (_photoImageView.image == nil || force)) {
 		
 		// Reset
 		self.maximumZoomScale = 1;

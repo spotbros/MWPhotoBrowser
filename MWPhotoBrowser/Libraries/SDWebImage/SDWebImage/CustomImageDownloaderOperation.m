@@ -39,6 +39,7 @@
 - (void)main
 {
     ThumbnailCacheManagerOperation *customOp = [ThumbnailCacheManagerOperation requestThumbnailOperationWithURL:_request.URL
+                                                                                                        options:_options
                                                                                                         success:^(UIImage *image, NSURL *url) {
         dispatch_main_sync_safe(^{
             if (self->_completedBlock) {
