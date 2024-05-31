@@ -16,13 +16,13 @@
 
 @property (copy, nonatomic) SDWebImageDownloaderProgressBlock progressBlock;
 @property (copy, nonatomic) SDWebImageDownloaderCompletedBlock completedBlock;
-@property (copy, nonatomic) void (^cancelBlock)();
+@property (copy, nonatomic) void (^cancelBlock)(void);
 
 @end
 
 @implementation CustomImageDownloaderOperation
 
-- (id)initWithRequest:(NSURLRequest *)request options:(SDWebImageDownloaderOptions)options progress:(void (^)(NSUInteger, long long))progressBlock completed:(void (^)(UIImage *, NSData *, NSError *, BOOL))completedBlock cancelled:(void (^)())cancelBlock
+- (id)initWithRequest:(NSURLRequest *)request options:(SDWebImageDownloaderOptions)options progress:(void (^)(NSUInteger, long long))progressBlock completed:(void (^)(UIImage *, NSData *, NSError *, BOOL))completedBlock cancelled:(void (^)(void))cancelBlock
 {
     if ((self = [super init]))
     {
@@ -41,15 +41,15 @@
     ThumbnailCacheManagerOperation *customOp = [ThumbnailCacheManagerOperation requestThumbnailOperationWithURL:_request.URL
                                                                                                         success:^(UIImage *image, NSURL *url) {
         dispatch_main_sync_safe(^{
-            if (_completedBlock) {
-                _completedBlock(image, nil, nil, YES);
+            if (self->_completedBlock) {
+                self->_completedBlock(image, nil, nil, YES);
             }
         });
     }
                                                                                                            fail:^(NSURL *url, NSError *error) {
         dispatch_main_sync_safe(^{
-            if (_completedBlock) {
-                _completedBlock(nil, nil, error, YES);
+            if (self->_completedBlock) {
+                self->_completedBlock(nil, nil, error, YES);
             }
         });
     }];

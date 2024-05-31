@@ -148,8 +148,8 @@
                     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                         @autoreleasepool {
                             @try {
-                                self.underlyingImage = [UIImage imageWithContentsOfFile:_photoURL.path];
-                                if (!_underlyingImage) {
+                                self.underlyingImage = [UIImage imageWithContentsOfFile:self->_photoURL.path];
+                                if (!self->_underlyingImage) {
                                     MWLog(@"Error loading photo from path: %@", _photoURL.path);
                                 }
                             } @finally {
