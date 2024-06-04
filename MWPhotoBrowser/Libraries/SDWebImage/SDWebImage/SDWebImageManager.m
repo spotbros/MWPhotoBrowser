@@ -9,6 +9,7 @@
 #import "SDWebImageManager.h"
 #import "UIImage+GIF.h"
 #import <objc/message.h>
+#import "ThumbnailCacheQueue.h"
 
 @interface SDWebImageCombinedOperation : NSObject <SDWebImageOperation>
 
@@ -130,6 +131,10 @@
             }
 
             return;
+        }
+        
+        if (!image) {
+            image = [[ThumbnailCacheQueue sharedInstance] cachedImageForURL:url];
         }
 
         if ((!image || options & SDWebImageRefreshCached) && (![self.delegate respondsToSelector:@selector(imageManager:shouldDownloadImageForURL:)] || [self.delegate imageManager:self shouldDownloadImageForURL:url]))
