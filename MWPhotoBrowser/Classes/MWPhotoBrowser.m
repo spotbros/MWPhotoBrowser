@@ -1368,9 +1368,15 @@
 }
 
 - (void)actuallySavePhoto:(id<MWPhoto>)photo {
-    if ([photo underlyingImage]) {
-        UIImageWriteToSavedPhotosAlbum([photo underlyingImage], self, 
-                                       @selector(image:didFinishSavingWithError:contextInfo:), nil);
+    UIImage *underlyingImage = [photo underlyingImage];
+    if (underlyingImage) {
+        if (self.delegate && [self.delegate respondsToSelector:@selector(photoBrowser:savePhoto:completion:)]) {
+            [self.delegate photoBrowser:self savePhoto:photo completion:^(BOOL success, NSError *error) {
+                [self image:underlyingImage didFinishSavingWithError:error contextInfo:nil];
+            }];
+        } else {
+            UIImageWriteToSavedPhotosAlbum(underlyingImage, self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
+        }
     }
 }
 
