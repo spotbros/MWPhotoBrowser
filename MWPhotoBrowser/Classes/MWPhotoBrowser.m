@@ -155,6 +155,7 @@
             [a setPhotoBrowser:self];
         }
         _applicationActivities = activities;
+        _displayActionButton = activities.count > 0;
     }
     return self;
 }
