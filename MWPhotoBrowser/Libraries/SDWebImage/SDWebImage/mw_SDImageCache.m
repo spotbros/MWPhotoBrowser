@@ -268,7 +268,7 @@ static const NSInteger kDefaultCacheMaxCacheAge = 60 * 60 * 24 * 7; // 1 week
     return mw_SDScaledImageForKey(key, image);
 }
 
-- (NSOperation *)queryDiskCacheForKey:(NSString *)key done:(void (^)(UIImage *image, SDImageCacheType cacheType))doneBlock
+- (NSOperation *)queryDiskCacheForKey:(NSString *)key done:(void (^)(UIImage *image, mw_SDImageCacheType cacheType))doneBlock
 {
     NSOperation *operation = NSOperation.new;
     

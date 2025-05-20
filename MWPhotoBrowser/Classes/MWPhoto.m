@@ -183,7 +183,7 @@
                                                                   self, @"photo", nil];
                                             [[NSNotificationCenter defaultCenter] postNotificationName:MWPHOTO_PROGRESS_NOTIFICATION object:dict];
                                         }
-                                       completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
+                                       completed:^(UIImage *image, NSError *error, mw_SDImageCacheType cacheType, BOOL finished) {
                                            if (error) {
                                                MWLog(@"SDWebImage failed to download image: %@", error);
                                            }

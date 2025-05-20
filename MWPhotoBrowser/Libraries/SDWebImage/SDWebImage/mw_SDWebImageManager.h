@@ -43,8 +43,8 @@ typedef enum
     mw_SDWebImageRefreshCached = 1 << 4
 } mw_SDWebImageOptions;
 
-typedef void(^mw_SDWebImageCompletedBlock)(UIImage *image, NSError *error, SDImageCacheType cacheType);
-typedef void(^mw_SDWebImageCompletedWithFinishedBlock)(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished);
+typedef void(^mw_SDWebImageCompletedBlock)(UIImage *image, NSError *error, mw_SDImageCacheType cacheType);
+typedef void(^mw_SDWebImageCompletedWithFinishedBlock)(UIImage *image, NSError *error, mw_SDImageCacheType cacheType, BOOL finished);
 
 
 @class mw_SDWebImageManager;

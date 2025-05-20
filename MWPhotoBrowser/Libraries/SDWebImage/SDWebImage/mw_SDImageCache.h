@@ -24,7 +24,7 @@ enum mw_SDImageCacheType
      */
     mw_SDImageCacheTypeMemory
 };
-typedef enum mw_SDImageCacheType SDImageCacheType;
+typedef enum mw_SDImageCacheType mw_SDImageCacheType;
 
 /**
  * SDImageCache maintains a memory cache and an optional disk cache. Disk cache write operations are performed
@@ -98,7 +98,7 @@ typedef enum mw_SDImageCacheType SDImageCacheType;
  *
  * @param key The unique key used to store the wanted image
  */
-- (NSOperation *)queryDiskCacheForKey:(NSString *)key done:(void (^)(UIImage *image, SDImageCacheType cacheType))doneBlock;
+- (NSOperation *)queryDiskCacheForKey:(NSString *)key done:(void (^)(UIImage *image, mw_SDImageCacheType cacheType))doneBlock;
 
 /**
  * Query the memory cache synchronously.
