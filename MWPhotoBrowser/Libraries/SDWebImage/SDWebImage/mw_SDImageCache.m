@@ -6,16 +6,15 @@
  * file that was distributed with this source code.
  */
 
-#import "SDImageCache.h"
-#import "SDWebImageDecoder.h"
-#import "UIImage+MultiFormat.h"
+#import "mw_SDImageCache.h"
+#import "mw_SDWebImageDecoder.h"
 #import <CommonCrypto/CommonDigest.h>
 #import <mach/mach.h>
 #import <mach/mach_host.h>
 
 static const NSInteger kDefaultCacheMaxCacheAge = 60 * 60 * 24 * 7; // 1 week
 
-@interface SDImageCache ()
+@interface mw_SDImageCache ()
 
 @property (strong, nonatomic) NSCache *memCache;
 @property (strong, nonatomic) NSString *diskCachePath;
@@ -25,11 +24,11 @@ static const NSInteger kDefaultCacheMaxCacheAge = 60 * 60 * 24 * 7; // 1 week
 @end
 
 
-@implementation SDImageCache {
+@implementation mw_SDImageCache {
     NSFileManager *_fileManager;
 }
 
-+ (SDImageCache *)sharedImageCache
++ (mw_SDImageCache *)sharedImageCache
 {
     static dispatch_once_t once;
     static id instance;
@@ -253,9 +252,9 @@ static const NSInteger kDefaultCacheMaxCacheAge = 60 * 60 * 24 * 7; // 1 week
     NSData *data = [self diskImageDataBySearchingAllPathsForKey:key];
     if (data)
     {
-        UIImage *image = [UIImage sd_imageWithData:data];
+        UIImage *image = [UIImage imageWithData:data];
         image = [self scaledImageForKey:key image:image];
-        image = [UIImage decodedImageWithImage:image];
+        image = [UIImage mw_decodedImageWithImage:image];
         return image;
     }
     else
@@ -266,7 +265,7 @@ static const NSInteger kDefaultCacheMaxCacheAge = 60 * 60 * 24 * 7; // 1 week
 
 - (UIImage *)scaledImageForKey:(NSString *)key image:(UIImage *)image
 {
-    return SDScaledImageForKey(key, image);
+    return mw_SDScaledImageForKey(key, image);
 }
 
 - (NSOperation *)queryDiskCacheForKey:(NSString *)key done:(void (^)(UIImage *image, SDImageCacheType cacheType))doneBlock
@@ -277,7 +276,7 @@ static const NSInteger kDefaultCacheMaxCacheAge = 60 * 60 * 24 * 7; // 1 week
 
     if (!key)
     {
-        doneBlock(nil, SDImageCacheTypeNone);
+        doneBlock(nil, mw_SDImageCacheTypeNone);
         return nil;
     }
 
@@ -285,7 +284,7 @@ static const NSInteger kDefaultCacheMaxCacheAge = 60 * 60 * 24 * 7; // 1 week
     UIImage *image = [self imageFromMemoryCacheForKey:key];
     if (image)
     {
-        doneBlock(image, SDImageCacheTypeMemory);
+        doneBlock(image, mw_SDImageCacheTypeMemory);
         return nil;
     }
 
@@ -307,7 +306,7 @@ static const NSInteger kDefaultCacheMaxCacheAge = 60 * 60 * 24 * 7; // 1 week
 
             dispatch_main_sync_safe(^
             {
-                doneBlock(diskImage, SDImageCacheTypeDisk);
+                doneBlock(diskImage, mw_SDImageCacheTypeDisk);
             });
         }
     });

@@ -6,10 +6,10 @@
  * file that was distributed with this source code.
  */
 
-#import "SDWebImageCompat.h"
-#import "SDWebImageOperation.h"
-#import "SDWebImageDownloader.h"
-#import "SDImageCache.h"
+#import "mw_SDWebImageCompat.h"
+#import "mw_SDWebImageOperation.h"
+#import "mw_SDWebImageDownloader.h"
+#import "mw_SDImageCache.h"
 
 typedef enum
 {
@@ -17,21 +17,21 @@ typedef enum
      * By default, when a URL fail to be downloaded, the URL is blacklisted so the library won't keep trying.
      * This flag disable this blacklisting.
      */
-    SDWebImageRetryFailed = 1 << 0,
+    mw_SDWebImageRetryFailed = 1 << 0,
     /**
      * By default, image downloads are started during UI interactions, this flags disable this feature,
      * leading to delayed download on UIScrollView deceleration for instance.
      */
-    SDWebImageLowPriority = 1 << 1,
+    mw_SDWebImageLowPriority = 1 << 1,
     /**
      * This flag disables on-disk caching
      */
-    SDWebImageCacheMemoryOnly = 1 << 2,
+    mw_SDWebImageCacheMemoryOnly = 1 << 2,
     /**
      * This flag enables progressive download, the image is displayed progressively during download as a browser would do.
      * By default, the image is only displayed once completely downloaded.
      */
-    SDWebImageProgressiveDownload = 1 << 3,
+    mw_SDWebImageProgressiveDownload = 1 << 3,
     /**
      * Even if the image is cached, respect the HTTP response cache control, and refresh the image from remote location if needed.
      * The disk caching will be handled by NSURLCache instead of SDWebImage leading to slight performance degradation.
@@ -40,16 +40,16 @@ typedef enum
      *
      * Use this flag only if you can't make your URLs static with embeded cache busting parameter.
      */
-    SDWebImageRefreshCached = 1 << 4
-} SDWebImageOptions;
+    mw_SDWebImageRefreshCached = 1 << 4
+} mw_SDWebImageOptions;
 
-typedef void(^SDWebImageCompletedBlock)(UIImage *image, NSError *error, SDImageCacheType cacheType);
-typedef void(^SDWebImageCompletedWithFinishedBlock)(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished);
+typedef void(^mw_SDWebImageCompletedBlock)(UIImage *image, NSError *error, SDImageCacheType cacheType);
+typedef void(^mw_SDWebImageCompletedWithFinishedBlock)(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished);
 
 
-@class SDWebImageManager;
+@class mw_SDWebImageManager;
 
-@protocol SDWebImageManagerDelegate <NSObject>
+@protocol mw_SDWebImageManagerDelegate <NSObject>
 
 @optional
 
@@ -61,7 +61,7 @@ typedef void(^SDWebImageCompletedWithFinishedBlock)(UIImage *image, NSError *err
  *
  * @return Return NO to prevent the downloading of the image on cache misses. If not implemented, YES is implied.
  */
-- (BOOL)imageManager:(SDWebImageManager *)imageManager shouldDownloadImageForURL:(NSURL *)imageURL;
+- (BOOL)imageManager:(mw_SDWebImageManager *)imageManager shouldDownloadImageForURL:(NSURL *)imageURL;
 
 /**
  * Allows to transform the image immediately after it has been downloaded and just before to cache it on disk and memory.
@@ -73,7 +73,7 @@ typedef void(^SDWebImageCompletedWithFinishedBlock)(UIImage *image, NSError *err
  *
  * @return The transformed image object.
  */
-- (UIImage *)imageManager:(SDWebImageManager *)imageManager transformDownloadedImage:(UIImage *)image withURL:(NSURL *)imageURL;
+- (UIImage *)imageManager:(mw_SDWebImageManager *)imageManager transformDownloadedImage:(UIImage *)image withURL:(NSURL *)imageURL;
 
 @end
 
@@ -101,12 +101,12 @@ SDWebImageManager *manager = [SDWebImageManager sharedManager];
 
  * @endcode
  */
-@interface SDWebImageManager : NSObject
+@interface mw_SDWebImageManager : NSObject
 
-@property (weak, nonatomic) id<SDWebImageManagerDelegate> delegate;
+@property (weak, nonatomic) id<mw_SDWebImageManagerDelegate> delegate;
 
-@property (strong, nonatomic, readonly) SDImageCache *imageCache;
-@property (strong, nonatomic, readonly) SDWebImageDownloader *imageDownloader;
+@property (strong, nonatomic, readonly) mw_SDImageCache *imageCache;
+@property (strong, nonatomic, readonly) mw_SDWebImageDownloader *imageDownloader;
 
 /**
  * The cache filter is a block used each time SDWebImageManager need to convert an URL into a cache key. This can
@@ -132,7 +132,7 @@ SDWebImageManager *manager = [SDWebImageManager sharedManager];
  *
  * @return SDWebImageManager shared instance
  */
-+ (SDWebImageManager *)sharedManager;
++ (mw_SDWebImageManager *)sharedManager;
 
 /**
  * Downloads the image at the given URL if not present in cache or return the cached version otherwise.
@@ -156,10 +156,10 @@ SDWebImageManager *manager = [SDWebImageManager sharedManager];
  *
  * @return Returns a cancellable NSOperation
  */
-- (id<SDWebImageOperation>)downloadWithURL:(NSURL *)url
-                                   options:(SDWebImageOptions)options
-                                  progress:(SDWebImageDownloaderProgressBlock)progressBlock
-                                 completed:(SDWebImageCompletedWithFinishedBlock)completedBlock;
+- (id<mw_SDWebImageOperation>)downloadWithURL:(NSURL *)url
+                                   options:(mw_SDWebImageOptions)options
+                                  progress:(mw_SDWebImageDownloaderProgressBlock)progressBlock
+                                 completed:(mw_SDWebImageCompletedWithFinishedBlock)completedBlock;
 
 /**
  * Cancel all current opreations

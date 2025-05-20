@@ -8,21 +8,20 @@
 
 #import "CustomImageDownloaderOperation.h"
 #import "ThumbnailCacheManagerOperation.h"
-#import "SDWebImageDecoder.h"
-#import "UIImage+MultiFormat.h"
+#import "mw_SDWebImageDecoder.h"
 #import <ImageIO/ImageIO.h>
 
 @interface CustomImageDownloaderOperation ()
 
-@property (copy, nonatomic) SDWebImageDownloaderProgressBlock progressBlock;
-@property (copy, nonatomic) SDWebImageDownloaderCompletedBlock completedBlock;
+@property (copy, nonatomic) mw_SDWebImageDownloaderProgressBlock progressBlock;
+@property (copy, nonatomic) mw_SDWebImageDownloaderCompletedBlock completedBlock;
 @property (copy, nonatomic) void (^cancelBlock)(void);
 
 @end
 
 @implementation CustomImageDownloaderOperation
 
-- (id)initWithRequest:(NSURLRequest *)request options:(SDWebImageDownloaderOptions)options progress:(void (^)(NSUInteger, long long))progressBlock completed:(void (^)(UIImage *, NSData *, NSError *, BOOL))completedBlock cancelled:(void (^)(void))cancelBlock
+- (id)initWithRequest:(NSURLRequest *)request options:(mw_SDWebImageDownloaderOptions)options progress:(void (^)(NSUInteger, long long))progressBlock completed:(void (^)(UIImage *, NSData *, NSError *, BOOL))completedBlock cancelled:(void (^)(void))cancelBlock
 {
     if ((self = [super init]))
     {

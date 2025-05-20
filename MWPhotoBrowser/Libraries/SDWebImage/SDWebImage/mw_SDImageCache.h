@@ -7,30 +7,30 @@
  */
 
 #import <Foundation/Foundation.h>
-#import "SDWebImageCompat.h"
+#import "mw_SDWebImageCompat.h"
 
-enum SDImageCacheType
+enum mw_SDImageCacheType
 {
     /**
      * The image wasn't available the SDWebImage caches, but was downloaded from the web.
      */
-    SDImageCacheTypeNone = 0,
+    mw_SDImageCacheTypeNone = 0,
     /**
      * The image was obtained from the disk cache.
      */
-    SDImageCacheTypeDisk,
+    mw_SDImageCacheTypeDisk,
     /**
      * The image was obtained from the memory cache.
      */
-    SDImageCacheTypeMemory
+    mw_SDImageCacheTypeMemory
 };
-typedef enum SDImageCacheType SDImageCacheType;
+typedef enum mw_SDImageCacheType SDImageCacheType;
 
 /**
  * SDImageCache maintains a memory cache and an optional disk cache. Disk cache write operations are performed
  * asynchronous so it doesn’t add unnecessary latency to the UI.
  */
-@interface SDImageCache : NSObject
+@interface mw_SDImageCache : NSObject
 
 /**
  * The maximum length of time to keep an image in the cache, in seconds
@@ -47,7 +47,7 @@ typedef enum SDImageCacheType SDImageCacheType;
  *
  * @return SDImageCache global instance
  */
-+ (SDImageCache *)sharedImageCache;
++ (mw_SDImageCache *)sharedImageCache;
 
 /**
  * Init a new cache store with a specific namespace

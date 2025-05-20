@@ -8,8 +8,8 @@
 
 #import "MWPhoto.h"
 #import "MWPhotoBrowser.h"
-#import "SDWebImageDecoder.h"
-#import "SDWebImageManager.h"
+#import "mw_SDWebImageDecoder.h"
+#import "mw_SDWebImageManager.h"
 #import <AssetsLibrary/AssetsLibrary.h>
 
 // Private
@@ -170,10 +170,10 @@
                     
                     // Load async from web (using SDWebImage)
                     @try {
-                        SDWebImageManager *manager = [SDWebImageManager sharedManager];
-                        SDWebImageOptions options = 0;
-                        options |= [self alwaysDownload] ? SDWebImageRefreshCached : 0;
-                        options |= [self cacheToMemoryOnly] ? SDWebImageCacheMemoryOnly : 0;
+                        mw_SDWebImageManager *manager = [mw_SDWebImageManager sharedManager];
+                        mw_SDWebImageOptions options = 0;
+                        options |= [self alwaysDownload] ? mw_SDWebImageRefreshCached : 0;
+                        options |= [self cacheToMemoryOnly] ? mw_SDWebImageCacheMemoryOnly : 0;
                         [manager downloadWithURL:_photoURL
                                          options:options
                                         progress:^(NSUInteger receivedSize, long long expectedSize) {
@@ -228,7 +228,7 @@
     if (self.underlyingImage) {
         // Decode image async to avoid lagging when UIKit lazy loads
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            self.underlyingImage = [UIImage decodedImageWithImage:self.underlyingImage];
+            self.underlyingImage = [UIImage mw_decodedImageWithImage:self.underlyingImage];
             dispatch_async(dispatch_get_main_queue(), ^{
                 // Finish on main thread
                 [self imageLoadingComplete];

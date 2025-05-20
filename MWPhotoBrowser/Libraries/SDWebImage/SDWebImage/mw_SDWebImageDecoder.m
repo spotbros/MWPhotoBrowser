@@ -8,11 +8,11 @@
  * file that was distributed with this source code.
  */
 
-#import "SDWebImageDecoder.h"
+#import "mw_SDWebImageDecoder.h"
 
 @implementation UIImage (ForceDecode)
 
-+ (UIImage *)decodedImageWithImage:(UIImage *)image
++ (UIImage *)mw_decodedImageWithImage:(UIImage *)image
 {
     if (image.images)
     {

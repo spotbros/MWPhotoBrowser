@@ -6,15 +6,14 @@
  * file that was distributed with this source code.
  */
 
-#import "SDWebImageDownloaderOperation.h"
-#import "SDWebImageDecoder.h"
-#import "UIImage+MultiFormat.h"
+#import "mw_SDWebImageDownloaderOperation.h"
+#import "mw_SDWebImageDecoder.h"
 #import <ImageIO/ImageIO.h>
 
-@interface SDWebImageDownloaderOperation ()
+@interface mw_SDWebImageDownloaderOperation ()
 
-@property (copy, nonatomic) SDWebImageDownloaderProgressBlock progressBlock;
-@property (copy, nonatomic) SDWebImageDownloaderCompletedBlock completedBlock;
+@property (copy, nonatomic) mw_SDWebImageDownloaderProgressBlock progressBlock;
+@property (copy, nonatomic) mw_SDWebImageDownloaderCompletedBlock completedBlock;
 @property (copy, nonatomic) void (^cancelBlock)(void);
 
 @property (assign, nonatomic, getter = isExecuting) BOOL executing;
@@ -25,7 +24,7 @@
 
 @end
 
-@implementation SDWebImageDownloaderOperation
+@implementation mw_SDWebImageDownloaderOperation
 {
     size_t width, height;
     BOOL responseFromCached;
@@ -34,7 +33,7 @@
 @synthesize executing = _executing;
 @synthesize finished = _finished;
 
-- (id)initWithRequest:(NSURLRequest *)request options:(SDWebImageDownloaderOptions)options progress:(void (^)(NSUInteger, long long))progressBlock completed:(void (^)(UIImage *, NSData *, NSError *, BOOL))completedBlock cancelled:(void (^)(void))cancelBlock
+- (id)initWithRequest:(NSURLRequest *)request options:(mw_SDWebImageDownloaderOptions)options progress:(void (^)(NSUInteger, long long))progressBlock completed:(void (^)(UIImage *, NSData *, NSError *, BOOL))completedBlock cancelled:(void (^)(void))cancelBlock
 {
     if ((self = [super init]))
     {
@@ -71,7 +70,7 @@
         {
             self.progressBlock(0, -1);
         }
-        [[NSNotificationCenter defaultCenter] postNotificationName:SDWebImageDownloadStartNotification object:self];
+        [[NSNotificationCenter defaultCenter] postNotificationName:mw_SDWebImageDownloadStartNotification object:self];
 
         if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_5_1)
         {
@@ -109,7 +108,7 @@
     if (self.connection)
     {
         [self.connection cancel];
-        [[NSNotificationCenter defaultCenter] postNotificationName:SDWebImageDownloadStopNotification object:self];
+        [[NSNotificationCenter defaultCenter] postNotificationName:mw_SDWebImageDownloadStopNotification object:self];
 
         // As we cancelled the connection, its callback won't be called and thus won't
         // maintain the isFinished and isExecuting flags.
@@ -174,7 +173,7 @@
     {
         [self.connection cancel];
 
-        [[NSNotificationCenter defaultCenter] postNotificationName:SDWebImageDownloadStopNotification object:nil];
+        [[NSNotificationCenter defaultCenter] postNotificationName:mw_SDWebImageDownloadStopNotification object:nil];
 
         if (self.completedBlock)
         {
@@ -189,7 +188,7 @@
 {
     [self.imageData appendData:data];
 
-    if ((self.options & SDWebImageDownloaderProgressiveDownload) && self.expectedSize > 0 && self.completedBlock)
+    if ((self.options & mw_SDWebImageDownloaderProgressiveDownload) && self.expectedSize > 0 && self.completedBlock)
     {
         // The following code is from http://www.cocoaintheshell.com/2011/05/progressive-images-download-imageio/
         // Thanks to the author @Nyx0uf
@@ -246,7 +245,7 @@
             {
                 UIImage *image = [UIImage imageWithCGImage:partialImageRef];
                 UIImage *scaledImage = [self scaledImageForKey:self.request.URL.absoluteString image:image];
-                image = [UIImage decodedImageWithImage:scaledImage];
+                image = [UIImage mw_decodedImageWithImage:scaledImage];
                 CGImageRelease(partialImageRef);
                 dispatch_main_sync_safe(^
                 {
@@ -269,7 +268,7 @@
 
 - (UIImage *)scaledImageForKey:(NSString *)key image:(UIImage *)image
 {
-    return SDScaledImageForKey(key, image);
+    return mw_SDScaledImageForKey(key, image);
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)aConnection
@@ -277,13 +276,13 @@
     CFRunLoopStop(CFRunLoopGetCurrent());
     self.connection = nil;
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:SDWebImageDownloadStopNotification object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:mw_SDWebImageDownloadStopNotification object:nil];
 
-    SDWebImageDownloaderCompletedBlock completionBlock = self.completedBlock;
+    mw_SDWebImageDownloaderCompletedBlock completionBlock = self.completedBlock;
 
     if (completionBlock)
     {
-        if (self.options & SDWebImageDownloaderIgnoreCachedResponse && responseFromCached)
+        if (self.options & mw_SDWebImageDownloaderIgnoreCachedResponse && responseFromCached)
         {
             completionBlock(nil, nil, nil, YES);
             self.completionBlock = nil;
@@ -292,13 +291,13 @@
         else
         {
             
-            UIImage *image = [UIImage sd_imageWithData:self.imageData];
+            UIImage *image = [UIImage imageWithData:self.imageData];
             
             image = [self scaledImageForKey:self.request.URL.absoluteString image:image];
             
             if (!image.images) // Do not force decod animated GIFs
             {
-                image = [UIImage decodedImageWithImage:image];
+                image = [UIImage mw_decodedImageWithImage:image];
             }
             
             if (CGSizeEqualToSize(image.size, CGSizeZero))
@@ -322,7 +321,7 @@
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
     CFRunLoopStop(CFRunLoopGetCurrent());
-    [[NSNotificationCenter defaultCenter] postNotificationName:SDWebImageDownloadStopNotification object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:mw_SDWebImageDownloadStopNotification object:nil];
 
     if (self.completedBlock)
     {

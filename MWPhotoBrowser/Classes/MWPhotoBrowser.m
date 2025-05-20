@@ -11,7 +11,7 @@
 #import "MWPhotoBrowser.h"
 #import "MWZoomingScrollView.h"
 #import "MBProgressHUD.h"
-#import "SDImageCache.h"
+#import "mw_SDImageCache.h"
 #import "UIPhotoBrowserCustomActivity.h"
 #import "FontUtils.h"
 #import "NSString+EquivalendReplacementsForDeprecations.h"
@@ -215,7 +215,7 @@
     _pagingScrollView.delegate = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [self releaseAllUnderlyingPhotos:NO];
-    [[SDImageCache sharedImageCache] clearMemory]; // clear memory
+    [[mw_SDImageCache sharedImageCache] clearMemory]; // clear memory
 }
 
 - (void)releaseAllUnderlyingPhotos:(BOOL)preserveCurrent {
