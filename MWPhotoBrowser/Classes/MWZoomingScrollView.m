@@ -6,6 +6,7 @@
 //  Copyright 2010 d3i. All rights reserved.
 //
 
+#import "App-Swift.h"
 #import "MWCommon.h"
 #import "MWZoomingScrollView.h"
 #import "MWPhotoBrowser.h"
@@ -132,6 +133,16 @@
 			
 			// Set image
 			_photoImageView.image = img;
+            
+            if (@available(iOS 16.0, *)) {
+                if ([LiveTextHelper isSupported]) {
+                    for (id<UIInteraction> inter in [_photoImageView.interactions copy]) {
+                        [_photoImageView removeInteraction:inter];
+                    }
+                    [LiveTextHelper addLiveTextTo:_photoImageView delegate:self];
+                }
+            }
+            
 			_photoImageView.hidden = NO;
 			
 			// Setup photo frame
