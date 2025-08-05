@@ -36,6 +36,7 @@
 - (void)photoBrowser:(MWPhotoBrowser *)photoBrowser actionButtonPressedForPhotoAtIndex:(NSUInteger)index;
 - (void)photoBrowser:(MWPhotoBrowser *)photoBrowser activityType:(NSString *)activityType completed:(BOOL)completed;
 - (void)photoBrowser:(MWPhotoBrowser *)photoBrowser savePhoto:(id<MWPhoto>)photo completion:(void (^)(BOOL success, NSError *error))completion;
+- (void)photoBrowserDidDismiss:(MWPhotoBrowser *)photoBrowser;
 
 @end
 

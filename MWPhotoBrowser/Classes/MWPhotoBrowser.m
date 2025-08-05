@@ -1259,7 +1259,11 @@
 #pragma mark - Misc
 
 - (void)doneButtonPressed:(id)sender {
-    [self dismissViewControllerAnimated:YES completion:nil];
+    [self dismissViewControllerAnimated:YES completion:^{
+        if ([self->_delegate respondsToSelector:@selector(photoBrowserDidDismiss:)]) {
+            [self->_delegate photoBrowserDidDismiss:self];
+        }
+    }];
 }
 
 #pragma mark - Actions
@@ -1439,7 +1443,11 @@
                                              handler:nil]];
         [self presentViewController:ac animated:YES completion:nil];
     }
-    [self dismissViewControllerAnimated:YES completion:nil];
+    [self dismissViewControllerAnimated:YES completion:^{
+        if ([self->_delegate respondsToSelector:@selector(photoBrowserDidDismiss:)]) {
+            [self->_delegate photoBrowserDidDismiss:self];
+        }
+    }];
 }
 
 @end
