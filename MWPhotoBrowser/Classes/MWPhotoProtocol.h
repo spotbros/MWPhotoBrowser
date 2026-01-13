@@ -55,6 +55,14 @@
 
 // Return a caption string to be displayed over the image
 // Return nil to display no caption
-- (NSString *)caption; 
+- (NSString *)caption;
+
+// Video support
+// Return YES if this item represents a video instead of a photo
+- (BOOL)isVideo;
+
+// Return the video URL for playback
+// Only called if isVideo returns YES
+- (NSURL *)videoURL;
 
 @end

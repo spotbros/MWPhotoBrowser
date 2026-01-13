@@ -27,4 +27,10 @@
 - (void)setMaxMinZoomScalesForCurrentBounds;
 - (void)prepareForReuse;
 
+// Video support
+- (BOOL)isDisplayingVideo;
+- (void)playVideo;
+- (void)playVideoMuted:(BOOL)muted;
+- (void)pauseVideo;
+
 @end

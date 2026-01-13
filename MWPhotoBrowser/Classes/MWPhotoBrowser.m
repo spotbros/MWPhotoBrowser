@@ -10,6 +10,7 @@
 #import "MWCommon.h"
 #import "MWPhotoBrowser.h"
 #import "MWZoomingScrollView.h"
+#import "MWVideo.h"
 #import "MBProgressHUD.h"
 #import "mw_SDImageCache.h"
 #import "UIPhotoBrowserCustomActivity.h"
@@ -71,6 +72,9 @@
 	BOOL _rotating;
     BOOL _viewIsActive; // active as in it's in the view heirarchy
     BOOL _didSavePreviousStateOfNavBar;
+    
+    // Video
+    NSUInteger _previousDisplayedPageIndex;
     
 }
 
@@ -197,6 +201,12 @@
     _visiblePages = [[NSMutableSet alloc] init];
     _recycledPages = [[NSMutableSet alloc] init];
     _photos = [[NSMutableArray alloc] init];
+    
+    // Video defaults
+    _initialTappedIndex = NSNotFound;
+    _autoplayVideosOnSwipe = NO;
+    _autoplayVideosMuted = YES;
+    _previousDisplayedPageIndex = NSUIntegerMax;
     
     _didSavePreviousStateOfNavBar = NO;
     if ([self respondsToSelector:@selector(automaticallyAdjustsScrollViewInsets)]){
@@ -907,16 +917,43 @@
     }
     
     // Notify delegate
-    static NSUInteger prevIndex = NSUIntegerMax;
-    if (index != prevIndex) {
+    if (index != _previousDisplayedPageIndex) {
+        // Pause video on previous page if it was playing
+        if (_previousDisplayedPageIndex != NSUIntegerMax) {
+            MWZoomingScrollView *previousPage = [self pageDisplayedAtIndex:_previousDisplayedPageIndex];
+            if (previousPage && [previousPage isDisplayingVideo]) {
+                [previousPage pauseVideo];
+            }
+        }
+        
         if ([_delegate respondsToSelector:@selector(photoBrowser:didDisplayPhotoAtIndex:)])
             [_delegate photoBrowser:self didDisplayPhotoAtIndex:index];
-        prevIndex = index;
+        _previousDisplayedPageIndex = index;
+        
+        // Handle video auto-play
+        MWZoomingScrollView *currentPage = [self pageDisplayedAtIndex:index];
+        if (currentPage && [currentPage isDisplayingVideo]) {
+            // Check if this is the initially tapped video
+            if (index == _initialTappedIndex) {
+                // User tapped this video directly, play with sound
+                [currentPage playVideoMuted:NO];
+                _initialTappedIndex = NSNotFound; // Reset after playing
+            } else if (_autoplayVideosOnSwipe) {
+                // Auto-play on swipe (if enabled)
+                [currentPage playVideoMuted:_autoplayVideosMuted];
+            }
+        }
     }
     
     // Update nav
     [self updateNavigation];
     
+}
+
+// Called when video starts playing in a page
+- (void)videoDidStartPlayingAtIndex:(NSUInteger)index {
+    // Can be used for analytics or other tracking if needed
+    MWLog(@"Video started playing at index %lu", (unsigned long)index);
 }
 
 #pragma mark - Frame Calculations
@@ -1273,53 +1310,72 @@
     id <MWPhoto> photo = [self photoAtIndex:_currentPageIndex];
     if ([self numberOfPhotos] > 0 && [photo underlyingImage]) {
         
+        // Check if this is a video
+        BOOL isVideo = [photo respondsToSelector:@selector(isVideo)] && [photo isVideo];
+        
         // If they have defined a delegate method then just message them
         if ([self.delegate respondsToSelector:@selector(photoBrowser:actionButtonPressedForPhotoAtIndex:)]) {
             
             // Let delegate handle things
             [self.delegate photoBrowser:self actionButtonPressedForPhotoAtIndex:_currentPageIndex];
             
+        } else if (isVideo && [self.delegate respondsToSelector:@selector(photoBrowser:requestVideoFileAtIndex:completion:)]) {
+            
+            // For videos, ask delegate to provide the video file, then show share options
+            [self showProgressHUDWithMessage:@""];
+            [self.delegate photoBrowser:self requestVideoFileAtIndex:_currentPageIndex completion:^(NSURL *videoFileURL, NSError *error) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self hideProgressHUD:YES];
+                    if (videoFileURL) {
+                        [self showActivityViewControllerWithItems:@[videoFileURL]];
+                    } else {
+                        [self showProgressHUDCompleteMessage:NSLocalizedString(@"Generic problem loading content msg", nil)];
+                    }
+                });
+            }];
+            
         } else {
-            // Show activity view controller
+            // Show activity view controller with image
             NSMutableArray *items = [NSMutableArray arrayWithObject:[photo underlyingImage]];
             if (photo.caption) {
                 [items addObject:photo.caption];
             }
-            
-            self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:self.applicationActionsOnly ? [NSArray array] : items applicationActivities:_applicationActivities];
-            NSMutableArray *excludedArray = [[NSMutableArray alloc] initWithObjects:UIActivityTypePostToWeibo, nil];
-            
-            self.activityViewController.excludedActivityTypes = [NSArray arrayWithArray:excludedArray];
-            // Removed un-needed activities
-            
-            if([[UIDevice currentDevice].systemVersion floatValue] >= 8.0 &&
-               UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-                self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
-            }
-
-            // Show
-            typeof(self) __weak weakSelf = self;
-            [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
-                
-                if (weakSelf.delegate) {
-                    if ([weakSelf.delegate respondsToSelector:@selector(photoBrowser:activityType:completed:)]) {
-                        [weakSelf.delegate photoBrowser:weakSelf activityType:activityType completed:completed];
-                    }
-                }
-                
-                weakSelf.activityViewController = nil;
-                if (!kMWPhotoBrowserAlwaysShowTools) {
-                    [weakSelf hideControlsAfterDelay];
-                }
-            }];
-            [self presentViewController:self.activityViewController animated:YES completion:nil];
-            
+            [self showActivityViewControllerWithItems:self.applicationActionsOnly ? [NSArray array] : items];
         }
         
         // Keep controls hidden
         [self setControlsHidden:NO animated:YES permanent:YES];
 
     }
+}
+
+- (void)showActivityViewControllerWithItems:(NSArray *)items {
+    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:_applicationActivities];
+    NSMutableArray *excludedArray = [[NSMutableArray alloc] initWithObjects:UIActivityTypePostToWeibo, nil];
+    
+    self.activityViewController.excludedActivityTypes = [NSArray arrayWithArray:excludedArray];
+    
+    if([[UIDevice currentDevice].systemVersion floatValue] >= 8.0 &&
+       UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
+    }
+
+    // Show
+    typeof(self) __weak weakSelf = self;
+    [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
+        
+        if (weakSelf.delegate) {
+            if ([weakSelf.delegate respondsToSelector:@selector(photoBrowser:activityType:completed:)]) {
+                [weakSelf.delegate photoBrowser:weakSelf activityType:activityType completed:completed];
+            }
+        }
+        
+        weakSelf.activityViewController = nil;
+        if (!kMWPhotoBrowserAlwaysShowTools) {
+            [weakSelf hideControlsAfterDelay];
+        }
+    }];
+    [self presentViewController:self.activityViewController animated:YES completion:nil];
 }
 
 #pragma mark - Action Progress

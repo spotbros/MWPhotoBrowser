@@ -38,6 +38,10 @@
 - (void)photoBrowser:(MWPhotoBrowser *)photoBrowser savePhoto:(id<MWPhoto>)photo completion:(void (^)(BOOL success, NSError *error))completion;
 - (void)photoBrowserDidDismiss:(MWPhotoBrowser *)photoBrowser;
 
+// Video support - delegate provides the video file for sharing
+// Called when user taps share button on a video. Delegate should download/provide the video file.
+- (void)photoBrowser:(MWPhotoBrowser *)photoBrowser requestVideoFileAtIndex:(NSUInteger)index completion:(void (^)(NSURL *videoFileURL, NSError *error))completion;
+
 @end
 
 // MWPhotoBrowser
@@ -50,6 +54,11 @@
 @property (nonatomic) BOOL displayActionButton;
 @property (nonatomic) BOOL applicationActionsOnly;
 @property (nonatomic, readonly) NSUInteger currentIndex,currentPageIndex;
+
+// Video configuration
+@property (nonatomic) NSUInteger initialTappedIndex;   // Index of item user tapped (will auto-play if video)
+@property (nonatomic) BOOL autoplayVideosOnSwipe;     // Auto-play videos when swiping to them (default: NO)
+@property (nonatomic) BOOL autoplayVideosMuted;       // If autoplay, play muted (default: YES)
 
 // Init
 - (id)initWithPhotos:(NSArray *)photosArray; // Depreciated
