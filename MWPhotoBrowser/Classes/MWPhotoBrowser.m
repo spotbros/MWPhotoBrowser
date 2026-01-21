@@ -329,6 +329,11 @@
             [doneButton setTitleTextAttributes:[NSDictionary dictionary] forState:UIControlStateNormal];
             [doneButton setTitleTextAttributes:[NSDictionary dictionary] forState:UIControlStateHighlighted];
         }
+        if (@available(iOS 26.0, *)) {
+            if (!designRequiresCompatibility) {
+                doneButton.tintColor = [UIColor whiteColor];
+            }
+        }
         self.navigationItem.rightBarButtonItem = doneButton;
     } else {
         // We're not first so show back button
