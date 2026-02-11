@@ -62,6 +62,7 @@
     UIImage *_previousNavigationBarBackgroundImageLandscapePhone;
     UIColor *_previousNavBarBottomBorderColor;
     CGFloat _previousNavBarBottomBorderHeight;
+    UIColor *_previousNavBarShadowColor;
     
     // Misc
     BOOL _isVCBasedStatusBarAppearance;
@@ -539,6 +540,7 @@
         _previousNavigationBarBackgroundImageLandscapePhone = [self.navigationController.navigationBar backgroundImageForBarMetrics:UIBarMetricsCompact];
     }
     _previousNavBarBottomBorderColor = [navBar bottomBorderColor];
+    _previousNavBarShadowColor = [navBar shadowColor];
 }
 
 - (void)restorePreviousNavBarAppearance:(BOOL)animated {
@@ -555,6 +557,7 @@
             [navBar setBackgroundImage:_previousNavigationBarBackgroundImageLandscapePhone forBarMetrics:UIBarMetricsCompact];
         }
         [navBar setBottomBorderColor:_previousNavBarBottomBorderColor height:1];
+        [navBar setShadowColor:_previousNavBarShadowColor];
         // Restore back button if we need to
         if (_previousViewControllerBackButton) {
             UIViewController *previousViewController = [self.navigationController topViewController]; // We've disappeared so previous is now top
