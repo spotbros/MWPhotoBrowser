@@ -63,6 +63,9 @@
     UIColor *_previousNavBarBottomBorderColor;
     CGFloat _previousNavBarBottomBorderHeight;
     UIColor *_previousNavBarShadowColor;
+    UINavigationBarAppearance *_previousStandardAppearance API_AVAILABLE(ios(15.0));
+    UINavigationBarAppearance *_previousScrollEdgeAppearance API_AVAILABLE(ios(15.0));
+    UINavigationBarAppearance *_previousCompactAppearance API_AVAILABLE(ios(15.0));
     
     // Misc
     BOOL _isVCBasedStatusBarAppearance;
@@ -454,10 +457,22 @@
     }
     
     // Navigation bar appearance
-    if (!_viewIsActive && [self.navigationController.viewControllers objectAtIndex:0] != self) {
+    BOOL isPushed = [self.navigationController.viewControllers objectAtIndex:0] != self;
+    if (!_viewIsActive && isPushed) {
         [self storePreviousNavBarAppearance];
     }
-    [self setNavBarAppearance:animated];
+    id<UIViewControllerTransitionCoordinator> coordinator = self.transitionCoordinator;
+    if (isPushed && coordinator) {
+        [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+            [self setNavBarAppearance:animated];
+        } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+            if ([context isCancelled]) {
+                [self setNavBarAppearance:NO];
+            }
+        }];
+    } else {
+        [self setNavBarAppearance:animated];
+    }
     
     // Hide navigation controller's toolbar
     _previousNavToolbarHidden = self.navigationController.toolbarHidden;
@@ -517,10 +532,20 @@
         navBar.barTintColor = nil;
         navBar.shadowImage = nil;
     }
-    navBar.barStyle = UIBarStyleBlackTranslucent; //cambiar color
+    navBar.barStyle = UIBarStyleBlack;
     if ([[UINavigationBar class] respondsToSelector:@selector(appearance)]) {
         [navBar setBackgroundImage:nil forBarMetrics:UIBarMetricsDefault];
         [navBar setBackgroundImage:nil forBarMetrics:UIBarMetricsCompact];
+    }
+    if (@available(iOS 15.0, *)) {
+        UINavigationBarAppearance *darkAppearance = [[UINavigationBarAppearance alloc] init];
+        [darkAppearance configureWithOpaqueBackground];
+        darkAppearance.backgroundColor = [UIColor blackColor];
+        darkAppearance.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+        darkAppearance.shadowColor = [UIColor blackColor];
+        navBar.standardAppearance = darkAppearance;
+        navBar.scrollEdgeAppearance = darkAppearance;
+        navBar.compactAppearance = darkAppearance;
     }
     navBar.appearanceBackgroundColor = [UIColor blackColor];
     [navBar setBottomBorderColor:[UIColor blackColor] height:1];
@@ -541,6 +566,11 @@
     }
     _previousNavBarBottomBorderColor = [navBar bottomBorderColor];
     _previousNavBarShadowColor = [navBar shadowColor];
+    if (@available(iOS 15.0, *)) {
+        _previousStandardAppearance = [navBar.standardAppearance copy];
+        _previousScrollEdgeAppearance = [navBar.scrollEdgeAppearance copy];
+        _previousCompactAppearance = [navBar.compactAppearance copy];
+    }
 }
 
 - (void)restorePreviousNavBarAppearance:(BOOL)animated {
@@ -558,6 +588,11 @@
         }
         [navBar setBottomBorderColor:_previousNavBarBottomBorderColor height:1];
         [navBar setShadowColor:_previousNavBarShadowColor];
+        if (@available(iOS 15.0, *)) {
+            if (_previousStandardAppearance) navBar.standardAppearance = _previousStandardAppearance;
+            if (_previousScrollEdgeAppearance) navBar.scrollEdgeAppearance = _previousScrollEdgeAppearance;
+            if (_previousCompactAppearance) navBar.compactAppearance = _previousCompactAppearance;
+        }
         // Restore back button if we need to
         if (_previousViewControllerBackButton) {
             UIViewController *previousViewController = [self.navigationController topViewController]; // We've disappeared so previous is now top
