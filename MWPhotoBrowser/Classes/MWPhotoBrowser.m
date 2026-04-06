@@ -1303,6 +1303,10 @@
     return UIStatusBarAnimationSlide;
 }
 
+- (UIStatusBarStyle)customPreferredStatusBarStyle {
+    return UIStatusBarStyleLightContent;
+}
+
 - (void)cancelControlHiding {
 	// If a timer exists then cancel and release
 	if (_controlVisibilityTimer) {
