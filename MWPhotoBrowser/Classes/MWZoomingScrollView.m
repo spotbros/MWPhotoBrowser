@@ -36,6 +36,7 @@
     AVPlayerViewController *_playerViewController;
     UIButton *_playButton;
     UIActivityIndicatorView *_videoLoadingIndicator;
+    UILabel *_videoErrorLabel;
     BOOL _isShowingVideo;
     BOOL _isVideoPlaying;
     id _videoStartTimeObserver;
@@ -126,6 +127,18 @@
                                                   UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
         _videoLoadingIndicator.hidesWhenStopped = YES;
         [_videoContainerView addSubview:_videoLoadingIndicator];
+
+        // Video error label (with translucent background so it stays readable on light thumbnails)
+        _videoErrorLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+        _videoErrorLabel.textColor = [UIColor whiteColor];
+        _videoErrorLabel.font = [UIFont systemFontOfSize:15];
+        _videoErrorLabel.textAlignment = NSTextAlignmentCenter;
+        _videoErrorLabel.numberOfLines = 0;
+        _videoErrorLabel.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.6];
+        _videoErrorLabel.layer.cornerRadius = 8.0;
+        _videoErrorLabel.layer.masksToBounds = YES;
+        _videoErrorLabel.hidden = YES;
+        [_videoContainerView addSubview:_videoErrorLabel];
 
         // Listen progress notifications
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -275,7 +288,8 @@
     _playButton.center = CGPointMake(_videoContainerView.bounds.size.width / 2.0,
                                      _videoContainerView.bounds.size.height / 2.0);
     _playButton.hidden = NO;
-    
+    _videoErrorLabel.hidden = YES;
+
     // Center video loading indicator
     _videoLoadingIndicator.center = _playButton.center;
     
@@ -391,7 +405,8 @@
     _videoThumbnailImageView.hidden = YES;
     _playButton.hidden = YES;
     [_videoLoadingIndicator stopAnimating];
-    
+    _videoErrorLabel.hidden = YES;
+
     // Re-enable zoom
     self.scrollEnabled = YES;
 }
@@ -440,8 +455,11 @@
             }];
         } else if (playerItem.status == AVPlayerItemStatusFailed) {
             [_videoLoadingIndicator stopAnimating];
-            _playButton.hidden = NO;
+            _playButton.hidden = YES;
             _videoThumbnailImageView.hidden = NO;
+            _videoErrorLabel.text = NSLocalizedString(@"video_format_not_supported", nil);
+            _videoErrorLabel.hidden = NO;
+            [self setNeedsLayout];
             MWLog(@"Video failed to load: %@", playerItem.error);
         }
     }
@@ -563,6 +581,18 @@
         _playButton.center = CGPointMake(floorf(self.bounds.size.width/2.0),
                                          floorf(self.bounds.size.height/2.0));
         _videoLoadingIndicator.center = _playButton.center;
+        if (!_videoErrorLabel.hidden) {
+            CGFloat paddingX = 14.0;
+            CGFloat paddingY = 10.0;
+            CGFloat maxWidth = MAX(0, _videoContainerView.bounds.size.width - 40);
+            CGSize textSize = [_videoErrorLabel sizeThatFits:CGSizeMake(maxWidth - paddingX * 2, CGFLOAT_MAX)];
+            CGRect labelFrame = CGRectMake(0, 0,
+                                           ceilf(textSize.width) + paddingX * 2,
+                                           ceilf(textSize.height) + paddingY * 2);
+            _videoErrorLabel.bounds = labelFrame;
+            _videoErrorLabel.center = CGPointMake(_videoContainerView.bounds.size.width / 2.0,
+                                                  _videoContainerView.bounds.size.height / 2.0);
+        }
         if (_playerViewController) {
             _playerViewController.view.frame = _videoContainerView.bounds;
         }
