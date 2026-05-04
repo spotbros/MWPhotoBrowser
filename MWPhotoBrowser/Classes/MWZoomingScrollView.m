@@ -15,6 +15,14 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AVKit/AVKit.h>
 
+// VLC fallback for video formats unsupported by AVFoundation (e.g. MPEG-1/2, MKV, AVI).
+// Compiled in only when MobileVLCKit is available so the photo browser can be built
+// without the dependency.
+#if __has_include(<MobileVLCKit/MobileVLCKit.h>)
+#import <MobileVLCKit/MobileVLCKit.h>
+#define MWZ_HAS_VLC 1
+#endif
+
 // Declare private methods of browser
 @interface MWPhotoBrowser ()
 - (UIImage *)imageForPhoto:(id<MWPhoto>)photo;
@@ -24,12 +32,16 @@
 @end
 
 // Private methods and properties
-@interface MWZoomingScrollView () {
-    
+@interface MWZoomingScrollView ()
+#ifdef MWZ_HAS_VLC
+    <VLCMediaPlayerDelegate>
+#endif
+{
+
 	MWTapDetectingView *_tapView; // for background taps
 	MWTapDetectingImageView *_photoImageView;
 	DACircularProgressView *_loadingIndicator;
-    
+
     // Video support
     UIView *_videoContainerView;
     UIImageView *_videoThumbnailImageView;
@@ -40,7 +52,14 @@
     BOOL _isShowingVideo;
     BOOL _isVideoPlaying;
     id _videoStartTimeObserver;
-    
+
+#ifdef MWZ_HAS_VLC
+    // VLC fallback
+    VLCMediaPlayer *_vlcPlayer;
+    UIView *_vlcDrawableView;
+    UITapGestureRecognizer *_vlcTapRecognizer;
+#endif
+
 }
 
 @property (nonatomic, weak) MWPhotoBrowser *photoBrowser;
@@ -366,6 +385,13 @@
 }
 
 - (void)pauseVideo {
+#ifdef MWZ_HAS_VLC
+    if (_vlcPlayer) {
+        [_vlcPlayer pause];
+        _isVideoPlaying = NO;
+        return;
+    }
+#endif
     if (_playerViewController.player) {
         [_playerViewController.player pause];
         _isVideoPlaying = NO;
@@ -375,30 +401,13 @@
 - (void)cleanupVideo {
     _isShowingVideo = NO;
     _isVideoPlaying = NO;
-    
-    // Remove time observer
-    if (_videoStartTimeObserver && _playerViewController.player) {
-        [_playerViewController.player removeTimeObserver:_videoStartTimeObserver];
-        _videoStartTimeObserver = nil;
-    }
-    
-    // Remove observers
-    if (_playerViewController.player.currentItem) {
-        @try {
-            [_playerViewController.player.currentItem removeObserver:self forKeyPath:@"status"];
-        } @catch (NSException *exception) {
-            // Observer was not registered
-        }
-        [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                        name:AVPlayerItemDidPlayToEndTimeNotification
-                                                      object:_playerViewController.player.currentItem];
-    }
-    
-    // Stop and remove player
-    [_playerViewController.player pause];
-    [_playerViewController.view removeFromSuperview];
-    _playerViewController = nil;
-    
+
+    [self teardownAVPlayer];
+
+#ifdef MWZ_HAS_VLC
+    [self teardownVLCPlayer];
+#endif
+
     // Hide video views
     _videoContainerView.hidden = YES;
     _videoThumbnailImageView.image = nil;
@@ -454,13 +463,30 @@
                 }
             }];
         } else if (playerItem.status == AVPlayerItemStatusFailed) {
-            [_videoLoadingIndicator stopAnimating];
-            _playButton.hidden = YES;
-            _videoThumbnailImageView.hidden = NO;
-            _videoErrorLabel.text = NSLocalizedString(@"video_format_not_supported", nil);
-            _videoErrorLabel.hidden = NO;
-            [self setNeedsLayout];
-            MWLog(@"Video failed to load: %@", playerItem.error);
+            MWLog(@"AVFoundation failed to load video: %@", playerItem.error);
+            NSURL *failedURL = nil;
+            if ([playerItem.asset isKindOfClass:[AVURLAsset class]]) {
+                failedURL = ((AVURLAsset *)playerItem.asset).URL;
+            }
+            // Defer teardown to next runloop turn so we don't remove a KVO observer
+            // from inside its own callback. Capture the photo so we can bail if the
+            // cell has been reused for a different one in the meantime.
+            id<MWPhoto> photoAtFailure = _photo;
+            __weak typeof(self) weakSelf = self;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                __strong typeof(weakSelf) strongSelf = weakSelf;
+                if (!strongSelf || strongSelf->_photo != photoAtFailure) return;
+                [strongSelf teardownAVPlayer];
+#ifdef MWZ_HAS_VLC
+                if (failedURL) {
+                    [strongSelf playVideoWithVLCAtURL:failedURL];
+                } else {
+                    [strongSelf showVideoFormatError];
+                }
+#else
+                [strongSelf showVideoFormatError];
+#endif
+            });
         }
     }
 }
@@ -473,6 +499,130 @@
     _playerViewController.view.hidden = YES;
     [_playerViewController.player seekToTime:kCMTimeZero completionHandler:nil];
 }
+
+#pragma mark - Video error / fallback
+
+- (void)showVideoFormatError {
+    [_videoLoadingIndicator stopAnimating];
+    _playButton.hidden = YES;
+    _videoThumbnailImageView.hidden = NO;
+    _videoErrorLabel.text = NSLocalizedString(@"video_format_not_supported", nil);
+    _videoErrorLabel.hidden = NO;
+    [self setNeedsLayout];
+}
+
+// Tears down the AVPlayer-based stack without touching the video container or thumbnail.
+// Used when we want to swap to the VLC fallback for the same playback session.
+- (void)teardownAVPlayer {
+    if (_videoStartTimeObserver && _playerViewController.player) {
+        [_playerViewController.player removeTimeObserver:_videoStartTimeObserver];
+        _videoStartTimeObserver = nil;
+    }
+    if (_playerViewController.player.currentItem) {
+        @try {
+            [_playerViewController.player.currentItem removeObserver:self forKeyPath:@"status"];
+        } @catch (NSException *exception) {
+            // Observer was not registered
+        }
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:AVPlayerItemDidPlayToEndTimeNotification
+                                                      object:_playerViewController.player.currentItem];
+    }
+    [_playerViewController.player pause];
+    [_playerViewController.view removeFromSuperview];
+    _playerViewController = nil;
+}
+
+#ifdef MWZ_HAS_VLC
+
+- (void)playVideoWithVLCAtURL:(NSURL *)url {
+    if (!_vlcDrawableView) {
+        _vlcDrawableView = [[UIView alloc] initWithFrame:_videoContainerView.bounds];
+        _vlcDrawableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        _vlcDrawableView.backgroundColor = [UIColor blackColor];
+        _vlcDrawableView.hidden = YES;
+        [_videoContainerView addSubview:_vlcDrawableView];
+
+        _vlcTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self
+                                                                    action:@selector(vlcViewTapped:)];
+        [_vlcDrawableView addGestureRecognizer:_vlcTapRecognizer];
+    }
+
+    if (!_vlcPlayer) {
+        _vlcPlayer = [[VLCMediaPlayer alloc] init];
+        _vlcPlayer.delegate = self;
+        _vlcPlayer.drawable = _vlcDrawableView;
+    }
+
+    _videoErrorLabel.hidden = YES;
+    [_videoLoadingIndicator startAnimating];
+    _vlcPlayer.media = [VLCMedia mediaWithURL:url];
+    [_vlcPlayer play];
+}
+
+- (void)teardownVLCPlayer {
+    if (_vlcPlayer) {
+        [_vlcPlayer stop];
+        _vlcPlayer.delegate = nil;
+        _vlcPlayer.drawable = nil;
+        _vlcPlayer.media = nil;
+        _vlcPlayer = nil;
+    }
+    [_vlcDrawableView removeFromSuperview];
+    _vlcDrawableView = nil;
+    _vlcTapRecognizer = nil;
+}
+
+- (void)vlcViewTapped:(UITapGestureRecognizer *)recognizer {
+    if (!_vlcPlayer) return;
+    if (_vlcPlayer.isPlaying) {
+        [_vlcPlayer pause];
+        _isVideoPlaying = NO;
+    } else {
+        [_vlcPlayer play];
+        _isVideoPlaying = YES;
+    }
+}
+
+#pragma mark - VLCMediaPlayerDelegate
+
+- (void)mediaPlayerStateChanged:(NSNotification *)notification {
+    if (!_vlcPlayer) return;
+    switch (_vlcPlayer.state) {
+        case VLCMediaPlayerStateError: {
+            MWLog(@"VLC failed to play video as well, giving up.");
+            [self teardownVLCPlayer];
+            [self showVideoFormatError];
+            break;
+        }
+        case VLCMediaPlayerStateEnded: {
+            _isVideoPlaying = NO;
+            _vlcDrawableView.hidden = YES;
+            _videoThumbnailImageView.hidden = NO;
+            _playButton.hidden = NO;
+            break;
+        }
+        default:
+            break;
+    }
+    // Note: we deliberately don't react to VLCMediaPlayerStatePlaying here.
+    // VLC enters that state during demuxing/buffering, before any frame has
+    // been rendered to the GL surface — swapping the thumbnail for the drawable
+    // at that point causes a visible black flash. We swap on the first time
+    // tick instead (see mediaPlayerTimeChanged:).
+}
+
+- (void)mediaPlayerTimeChanged:(NSNotification *)notification {
+    if (!_vlcPlayer || !_vlcDrawableView.hidden) return;
+    if (_vlcPlayer.time.intValue <= 0) return;
+    [_videoLoadingIndicator stopAnimating];
+    _videoThumbnailImageView.hidden = YES;
+    _vlcDrawableView.hidden = NO;
+    _isVideoPlaying = YES;
+    [_photoBrowser videoDidStartPlayingAtIndex:self.tag - 1000];
+}
+
+#endif
 
 #pragma mark - Loading Progress
 
