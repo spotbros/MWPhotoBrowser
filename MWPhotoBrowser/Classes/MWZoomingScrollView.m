@@ -12,6 +12,7 @@
 #import "MWPhotoBrowser.h"
 #import "MWPhoto.h"
 #import "DACircularProgressView.h"
+#import "NSString+Utils.h"
 #import <AVFoundation/AVFoundation.h>
 #import <AVKit/AVKit.h>
 
@@ -22,6 +23,9 @@
 #import <MobileVLCKit/MobileVLCKit.h>
 #define MWZ_HAS_VLC 1
 #endif
+
+static NSString * const MWZPlayIconName = @"play.circle.fill";
+static NSString * const MWZPauseIconName = @"pause.circle.fill";
 
 // Declare private methods of browser
 @interface MWPhotoBrowser ()
@@ -58,6 +62,16 @@
     VLCMediaPlayer *_vlcPlayer;
     UIView *_vlcDrawableView;
     UITapGestureRecognizer *_vlcTapRecognizer;
+    UIView *_vlcControlsView;
+    UIView *_vlcBottomBar;
+    UIButton *_vlcPlayPauseButton;
+    UISlider *_vlcScrubber;
+    UILabel *_vlcTimeLabel;
+    BOOL _vlcUserIsScrubbing;
+    NSTimer *_vlcControlsHideTimer;
+    int _vlcLastRenderedTimeSec;
+    int _vlcLastRenderedLengthSec;
+    NSString *_vlcCachedLengthStr;
 #endif
 
 }
@@ -131,7 +145,7 @@
         _playButton.frame = CGRectMake(0, 0, 80, 80);
         _playButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin |
                                        UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
-        [_playButton setImage:[UIImage systemImageNamed:@"play.circle.fill"] forState:UIControlStateNormal];
+        [_playButton setImage:[UIImage systemImageNamed:MWZPlayIconName] forState:UIControlStateNormal];
         _playButton.tintColor = [UIColor whiteColor];
         _playButton.contentVerticalAlignment = UIControlContentVerticalAlignmentFill;
         _playButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentFill;
@@ -546,6 +560,8 @@
         _vlcTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self
                                                                     action:@selector(vlcViewTapped:)];
         [_vlcDrawableView addGestureRecognizer:_vlcTapRecognizer];
+
+        [self setupVLCControls];
     }
 
     if (!_vlcPlayer) {
@@ -568,20 +584,175 @@
         _vlcPlayer.media = nil;
         _vlcPlayer = nil;
     }
+    [_vlcControlsHideTimer invalidate];
+    _vlcControlsHideTimer = nil;
+    [_vlcControlsView removeFromSuperview];
+    _vlcControlsView = nil;
+    _vlcBottomBar = nil;
+    _vlcPlayPauseButton = nil;
+    _vlcScrubber = nil;
+    _vlcTimeLabel = nil;
+    _vlcUserIsScrubbing = NO;
+    _vlcLastRenderedTimeSec = -1;
+    _vlcLastRenderedLengthSec = -1;
+    _vlcCachedLengthStr = nil;
     [_vlcDrawableView removeFromSuperview];
     _vlcDrawableView = nil;
     _vlcTapRecognizer = nil;
 }
 
 - (void)vlcViewTapped:(UITapGestureRecognizer *)recognizer {
+    if (!_vlcPlayer || _vlcDrawableView.hidden) return;
+    if (_vlcControlsView.hidden) {
+        [self showVLCControlsAndScheduleHide];
+    } else {
+        [self hideVLCControls];
+    }
+}
+
+- (void)setupVLCControls {
+    _vlcControlsView = [[UIView alloc] initWithFrame:_videoContainerView.bounds];
+    _vlcControlsView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    _vlcControlsView.backgroundColor = [UIColor clearColor];
+    _vlcControlsView.hidden = YES;
+    [_videoContainerView addSubview:_vlcControlsView];
+
+    _vlcPlayPauseButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    _vlcPlayPauseButton.frame = CGRectMake(0, 0, 64, 64);
+    _vlcPlayPauseButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin |
+                                            UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+    _vlcPlayPauseButton.center = CGPointMake(CGRectGetMidX(_vlcControlsView.bounds),
+                                              CGRectGetMidY(_vlcControlsView.bounds));
+    [_vlcPlayPauseButton setImage:[UIImage systemImageNamed:MWZPauseIconName] forState:UIControlStateNormal];
+    _vlcPlayPauseButton.tintColor = [UIColor whiteColor];
+    _vlcPlayPauseButton.contentVerticalAlignment = UIControlContentVerticalAlignmentFill;
+    _vlcPlayPauseButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentFill;
+    [_vlcPlayPauseButton addTarget:self action:@selector(vlcPlayPauseTapped) forControlEvents:UIControlEventTouchUpInside];
+    [_vlcControlsView addSubview:_vlcPlayPauseButton];
+
+    CGFloat barH = 44.0;
+    _vlcBottomBar = [[UIView alloc] initWithFrame:CGRectMake(0,
+                                                              _vlcControlsView.bounds.size.height - barH,
+                                                              _vlcControlsView.bounds.size.width,
+                                                              barH)];
+    _vlcBottomBar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
+    _vlcBottomBar.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.45];
+    [_vlcControlsView addSubview:_vlcBottomBar];
+
+    CGFloat labelW = 96.0;
+    CGFloat hPad = 12.0;
+    _vlcScrubber = [[UISlider alloc] initWithFrame:CGRectMake(hPad,
+                                                                0,
+                                                                _vlcBottomBar.bounds.size.width - labelW - hPad * 2,
+                                                                barH)];
+    _vlcScrubber.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    _vlcScrubber.minimumValue = 0.0;
+    _vlcScrubber.maximumValue = 1.0;
+    _vlcScrubber.value = 0.0;
+    _vlcScrubber.minimumTrackTintColor = [UIColor whiteColor];
+    _vlcScrubber.maximumTrackTintColor = [UIColor colorWithWhite:1.0 alpha:0.3];
+    [_vlcScrubber setThumbImage:[UIImage new] forState:UIControlStateNormal];
+    [_vlcScrubber setThumbImage:[UIImage new] forState:UIControlStateHighlighted];
+    [_vlcScrubber addTarget:self action:@selector(vlcScrubberTouchDown:) forControlEvents:UIControlEventTouchDown];
+    [_vlcScrubber addTarget:self action:@selector(vlcScrubberValueChanged:) forControlEvents:UIControlEventValueChanged];
+    [_vlcScrubber addTarget:self action:@selector(vlcScrubberTouchUp:) forControlEvents:UIControlEventTouchUpInside | UIControlEventTouchUpOutside | UIControlEventTouchCancel];
+    [_vlcBottomBar addSubview:_vlcScrubber];
+
+    _vlcTimeLabel = [[UILabel alloc] initWithFrame:CGRectMake(_vlcBottomBar.bounds.size.width - labelW - hPad,
+                                                                0,
+                                                                labelW,
+                                                                barH)];
+    _vlcTimeLabel.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+    _vlcTimeLabel.textColor = [UIColor whiteColor];
+    _vlcTimeLabel.font = [UIFont monospacedDigitSystemFontOfSize:13 weight:UIFontWeightRegular];
+    _vlcTimeLabel.textAlignment = NSTextAlignmentRight;
+    _vlcTimeLabel.text = @"0:00 / 0:00";
+    [_vlcBottomBar addSubview:_vlcTimeLabel];
+}
+
+- (void)vlcPlayPauseTapped {
     if (!_vlcPlayer) return;
     if (_vlcPlayer.isPlaying) {
         [_vlcPlayer pause];
         _isVideoPlaying = NO;
+        [_vlcControlsHideTimer invalidate];
+        _vlcControlsHideTimer = nil;
+        [self setVLCPlayPauseIconPlaying:NO];
     } else {
         [_vlcPlayer play];
         _isVideoPlaying = YES;
+        [self setVLCPlayPauseIconPlaying:YES];
+        [self showVLCControlsAndScheduleHide];
     }
+}
+
+- (void)setVLCPlayPauseIconPlaying:(BOOL)playing {
+    NSString *name = playing ? MWZPauseIconName : MWZPlayIconName;
+    [_vlcPlayPauseButton setImage:[UIImage systemImageNamed:name] forState:UIControlStateNormal];
+}
+
+- (void)vlcScrubberTouchDown:(UISlider *)slider {
+    _vlcUserIsScrubbing = YES;
+    [_vlcControlsHideTimer invalidate];
+    _vlcControlsHideTimer = nil;
+}
+
+- (void)vlcScrubberValueChanged:(UISlider *)slider {
+    int lengthMs = _vlcPlayer.media.length.intValue;
+    int previewMs = (int)(slider.value * (float)lengthMs);
+    _vlcTimeLabel.text = [NSString stringWithFormat:@"%@ / %@",
+                          [NSString timeFormatted:previewMs / 1000.0],
+                          _vlcCachedLengthStr ?: [NSString timeFormatted:lengthMs / 1000.0]];
+}
+
+- (void)vlcScrubberTouchUp:(UISlider *)slider {
+    if (_vlcPlayer) {
+        _vlcPlayer.position = slider.value;
+    }
+    _vlcUserIsScrubbing = NO;
+    if (_vlcPlayer.isPlaying) {
+        [self showVLCControlsAndScheduleHide];
+    }
+}
+
+- (void)showVLCControlsAndScheduleHide {
+    _vlcControlsView.hidden = NO;
+    [_vlcControlsHideTimer invalidate];
+    __weak typeof(self) weakSelf = self;
+    _vlcControlsHideTimer = [NSTimer scheduledTimerWithTimeInterval:3.0
+                                                            repeats:NO
+                                                              block:^(NSTimer * _Nonnull t) {
+        [weakSelf hideVLCControls];
+    }];
+}
+
+- (void)hideVLCControls {
+    [_vlcControlsHideTimer invalidate];
+    _vlcControlsHideTimer = nil;
+    if (_vlcUserIsScrubbing) return;
+    _vlcControlsView.hidden = YES;
+}
+
+- (void)updateVLCTimeUI {
+    if (!_vlcPlayer) return;
+    int lengthMs = _vlcPlayer.media.length.intValue;
+    int timeMs = _vlcPlayer.time.intValue;
+    int timeSec = timeMs / 1000;
+    int lengthSec = lengthMs / 1000;
+
+    if (!_vlcUserIsScrubbing) {
+        _vlcScrubber.value = (lengthMs > 0) ? (float)timeMs / (float)lengthMs : 0.0f;
+    }
+
+    if (timeSec == _vlcLastRenderedTimeSec && lengthSec == _vlcLastRenderedLengthSec) return;
+    if (lengthSec != _vlcLastRenderedLengthSec || !_vlcCachedLengthStr) {
+        _vlcCachedLengthStr = [NSString timeFormatted:lengthSec];
+        _vlcLastRenderedLengthSec = lengthSec;
+    }
+    _vlcLastRenderedTimeSec = timeSec;
+    _vlcTimeLabel.text = [NSString stringWithFormat:@"%@ / %@",
+                          [NSString timeFormatted:timeSec],
+                          _vlcCachedLengthStr];
 }
 
 #pragma mark - VLCMediaPlayerDelegate
@@ -600,6 +771,10 @@
             _vlcDrawableView.hidden = YES;
             _videoThumbnailImageView.hidden = NO;
             _playButton.hidden = NO;
+            _vlcControlsView.hidden = YES;
+            [_vlcControlsHideTimer invalidate];
+            _vlcControlsHideTimer = nil;
+            [self setVLCPlayPauseIconPlaying:NO];
             break;
         }
         default:
@@ -613,13 +788,18 @@
 }
 
 - (void)mediaPlayerTimeChanged:(NSNotification *)notification {
-    if (!_vlcPlayer || !_vlcDrawableView.hidden) return;
-    if (_vlcPlayer.time.intValue <= 0) return;
-    [_videoLoadingIndicator stopAnimating];
-    _videoThumbnailImageView.hidden = YES;
-    _vlcDrawableView.hidden = NO;
-    _isVideoPlaying = YES;
-    [_photoBrowser videoDidStartPlayingAtIndex:self.tag - 1000];
+    if (!_vlcPlayer) return;
+    if (_vlcDrawableView.hidden) {
+        if (_vlcPlayer.time.intValue <= 0) return;
+        [_videoLoadingIndicator stopAnimating];
+        _videoThumbnailImageView.hidden = YES;
+        _vlcDrawableView.hidden = NO;
+        _isVideoPlaying = YES;
+        [self setVLCPlayPauseIconPlaying:YES];
+        [_photoBrowser videoDidStartPlayingAtIndex:self.tag - 1000];
+        [self showVLCControlsAndScheduleHide];
+    }
+    [self updateVLCTimeUI];
 }
 
 #endif
