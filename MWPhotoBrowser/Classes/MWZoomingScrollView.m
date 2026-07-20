@@ -362,14 +362,19 @@ static NSString * const MWZPauseIconName = @"pause.circle.fill";
         _playerViewController.player = player;
         _playerViewController.showsPlaybackControls = YES;
         _playerViewController.videoGravity = AVLayerVideoGravityResizeAspect;
-        _playerViewController.allowsPictureInPicturePlayback = NO;
+        _playerViewController.allowsPictureInPicturePlayback = YES;
+        _playerViewController.canStartPictureInPictureAutomaticallyFromInline = YES;
         
         // Add player view to container but keep it hidden until video is ready
+        [self.photoBrowser addChildViewController:_playerViewController];
+        
         _playerViewController.view.frame = _videoContainerView.bounds;
         _playerViewController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         _playerViewController.view.backgroundColor = [UIColor blackColor];
         _playerViewController.view.hidden = YES; // Hidden until video actually starts
+
         [_videoContainerView addSubview:_playerViewController.view];
+        [_playerViewController didMoveToParentViewController:self.photoBrowser];
         
         // Observe player status
         [player.currentItem addObserver:self
@@ -543,7 +548,9 @@ static NSString * const MWZPauseIconName = @"pause.circle.fill";
                                                       object:_playerViewController.player.currentItem];
     }
     [_playerViewController.player pause];
+    [_playerViewController willMoveToParentViewController:nil];
     [_playerViewController.view removeFromSuperview];
+    [_playerViewController removeFromParentViewController];
     _playerViewController = nil;
 }
 
