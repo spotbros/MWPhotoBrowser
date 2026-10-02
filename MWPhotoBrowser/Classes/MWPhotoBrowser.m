@@ -1375,10 +1375,8 @@
         } else if (isVideo && [self.delegate respondsToSelector:@selector(photoBrowser:requestVideoFileAtIndex:completion:)]) {
             
             // For videos, ask delegate to provide the video file, then show share options
-            [self showProgressHUDWithMessage:@""];
             [self.delegate photoBrowser:self requestVideoFileAtIndex:_currentPageIndex completion:^(NSURL *videoFileURL, NSError *error) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [self hideProgressHUD:YES];
                     if (videoFileURL) {
                         [self showActivityViewControllerWithItems:@[videoFileURL]];
                     } else {
