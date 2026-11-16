@@ -1372,6 +1372,9 @@
             // Let delegate handle things
             [self.delegate photoBrowser:self actionButtonPressedForPhotoAtIndex:_currentPageIndex];
             
+        } else if (self.applicationActionsOnly) {
+            [self showActivityViewControllerWithItems:@[]];
+
         } else if (isVideo && [self.delegate respondsToSelector:@selector(photoBrowser:requestVideoFileAtIndex:completion:)]) {
             
             // For videos, ask delegate to provide the video file, then show share options
@@ -1391,7 +1394,7 @@
             if (photo.caption) {
                 [items addObject:photo.caption];
             }
-            [self showActivityViewControllerWithItems:self.applicationActionsOnly ? [NSArray array] : items];
+            [self showActivityViewControllerWithItems:items];
         }
         
         // Keep controls hidden
@@ -1401,7 +1404,7 @@
 }
 
 - (void)showActivityViewControllerWithItems:(NSArray *)items {
-    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:_applicationActivities];
+    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:self.applicationActionsOnly ? @[] : items applicationActivities:_applicationActivities];
     NSMutableArray *excludedArray = [[NSMutableArray alloc] initWithObjects:UIActivityTypePostToWeibo, nil];
     
     self.activityViewController.excludedActivityTypes = [NSArray arrayWithArray:excludedArray];
